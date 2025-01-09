@@ -115,14 +115,14 @@ Com uma arquitetura bem definida e moderna, a API segue as melhores práticas de
 
 - **Diagrama de Classes**  
   Representa as entidades do sistema e suas relações.  
-  Localizado em: `📁 diagramas/Diagrama-Classes.png`.
+  Localizado em: `📁 diagramas/Diagrama-Classe.png`.
 
 - **Diagrama de Entidade-Relacionamento (ER)**  
   Mostra o fluxo de interações entre os componentes da API.    
   Localizado em: `📁 diagramas/Diagrama-Sequencia.png`.
 
 ### **Prévia**  
-![Diagrama de Classes](diagramas/Diagrama-Classes.png)  
+![Diagrama de Classes](diagramas/Diagrama-Classe.png)  
 ![Diagrama Sequencia](diagramas/Diagrama-Sequencia.png)
 
 ---
