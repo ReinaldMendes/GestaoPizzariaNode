@@ -1,7 +1,7 @@
 import e from "express";
 import "dotenv/config";
 import "./config/db.js";
-import usuario_router from "./routers/usuario_router.js";
+import usuario_router from "./routers/usuario-router.js";
 
 
 const app = e();
