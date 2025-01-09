@@ -4,14 +4,14 @@ const vendaSchema = new Schema(
   {
     cliente: {
       type: Schema.Types.ObjectId,
-      ref: "User", // Referência ao cliente (usuário)
+      ref: "Cliente",
       required: true,
     },
-    pizzas: [
+    produtos: [
       {
-        pizza: {
+        produto: {
           type: Schema.Types.ObjectId,
-          ref: "Pizza", // Referência ao modelo de pizzas
+          ref: "Produto", // Referência ao modelo de produtos
           required: true,
         },
         quantidade: {
