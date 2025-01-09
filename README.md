@@ -179,7 +179,7 @@ Contribuições são bem-vindas! Siga os passos abaixo:
 
 ## 📞 **Contato**
 
-📧 E-mail: seu-email@exemplo.com  
+📧 E-mail: reinald_30_2009@hotmail.com  
 🌐 GitHub: [Reinald Mendes](https://github.com/ReinaldMendes)  
 📱 LinkedIn: [Reinald Mendes](https://www.linkedin.com/in/reinald-mendes-b712b9182/)
 
