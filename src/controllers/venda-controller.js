@@ -5,7 +5,7 @@ export const index = async (req, res) => {
   try {
     const vendas = await Venda.find()
       .populate("cliente", "name email") // Popula dados do cliente
-      .populate("pizzas.pizza", "sabor preco estoque") // Popula dados das pizzas
+      .populate("produtos.produto", "sabor preco estoque") // Popula dados dos produtos
       .exec();
     res.json(vendas);
   } catch (error) {
@@ -17,7 +17,7 @@ export const show = async (req, res) => {
   try {
     const venda = await Venda.findById(req.params.id)
       .populate("cliente", "name email")
-      .populate("pizzas.pizza", "sabor preco estoque")
+      .populate("produtos.produto", "sabor preco estoque")
       .exec();
     if (!venda) {
       return res.status(404).json({ error: "Venda não encontrada" });
@@ -30,14 +30,14 @@ export const show = async (req, res) => {
 
 export const store = async (req, res) => {
   try {
-    const { cliente, pizzas } = req.body;
+    const { cliente, produtos } = req.body;
 
     let total = 0;
 
-    for (const item of pizzas) {
-      const pizza = await Pizza.findById(item.pizza).exec();
+    for (const item of produtos) {
+      const pizza = await Pizza.findById(item.produto).exec();
       if (!pizza) {
-        return res.status(404).json({ error: `Pizza com ID ${item.pizza} não encontrada` });
+        return res.status(404).json({ error: `Produto com ID ${item.produto} não encontrado` });
       }
 
       // Verifica o estoque
@@ -55,7 +55,7 @@ export const store = async (req, res) => {
       await pizza.save();
     }
 
-    const venda = await Venda.create({ cliente, pizzas, total });
+    const venda = await Venda.create({ cliente, produtos, total });
     res.status(201).json(venda);
   } catch (error) {
     res.status(400).send(error.message);
@@ -74,8 +74,8 @@ export const destroy = async (req, res) => {
     }
 
     // Restaura o estoque ao excluir a venda
-    for (const item of venda.pizzas) {
-      const pizza = await Pizza.findById(item.pizza).exec();
+    for (const item of venda.produtos) {
+      const pizza = await Pizza.findById(item.produto).exec();
       if (pizza) {
         pizza.estoque += item.quantidade;
         await pizza.save();
