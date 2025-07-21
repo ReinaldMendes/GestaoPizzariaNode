@@ -7,7 +7,6 @@
 
     <nav>
       <router-link to="/dashboard">Dashboard</router-link>
-      <!-- Só mostra "Usuários" se o papel for ADMINISTRATOR -->
       <router-link v-if="userRole === 'ADMINISTRATOR'" to="/usuarios">Usuários</router-link>
       <router-link to="/produtos">Produtos</router-link>
       <router-link to="/pizzas">Pizzas</router-link>
@@ -28,16 +27,17 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const userRole = ref('')
 
-// Supondo que você guarda o usuário no localStorage em um objeto JSON com o token e role
-// Exemplo: localStorage.setItem('user', JSON.stringify({ name: 'João', role: 'ADMINISTRATOR' }))
-// Ajuste conforme seu armazenamento real
-
 onMounted(() => {
-  try {
-    const userData = JSON.parse(localStorage.getItem('user'))
-    userRole.value = userData?.role || ''
-  } catch {
-    userRole.value = ''
+  const userRaw = localStorage.getItem('user')
+
+  if (userRaw) {
+    try {
+      const user = JSON.parse(userRaw)
+      userRole.value = user.role || ''
+    } catch (error) {
+      console.error('Erro ao ler user do localStorage:', error)
+      userRole.value = ''
+    }
   }
 })
 
