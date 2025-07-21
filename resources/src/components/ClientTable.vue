@@ -1,34 +1,61 @@
 <template>
-    <div class="overflow-x-auto rounded-lg shadow-lg bg-white p-4">
-      <h2 class="text-xl font-bold mb-4 text-gray-800">Clientes</h2>
-      <table class="min-w-full table-auto">
-        <thead class="bg-green-600 text-white">
-          <tr>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Nome</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Email</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold">Data</th>
-          </tr>
-        </thead>
-        <tbody class="text-gray-700">
-          <tr
-            v-for="cliente in clientes"
-            :key="cliente.email"
-            class="hover:bg-gray-50 border-b border-gray-200 transition duration-200"
-          >
-            <td class="px-6 py-4">{{ cliente.nome }}</td>
-            <td class="px-6 py-4">{{ cliente.email }}</td>
-            <td class="px-6 py-4">{{ cliente.data }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </template>
-  
-  <script setup>
-  const clientes = [
-    { nome: 'João Silva', email: 'joao@email.com', data: '2025-07-15' },
-    { nome: 'Maria Santos', email: 'maria@email.com', data: '2025-07-14' },
-    { nome: 'Carlos Oliveira', email: 'carlos@email.com', data: '2025-07-13' }
-  ]
-  </script>
-  
+  <div class="clientes">
+    <h2>Lista de Clientes</h2>
+
+    <table v-if="clientes.length" border="1">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Telefone</th>
+          <th>Endereço</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="cliente in clientes" :key="cliente.id">
+          <td>{{ cliente.nome }}</td>
+          <td>{{ cliente.telefone }}</td>
+          <td>
+            {{ cliente.endereco.rua }}, {{ cliente.endereco.numero }} -
+            {{ cliente.endereco.bairro }}, {{ cliente.endereco.cidade }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p v-else>Nenhum cliente encontrado</p>
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+
+export default {
+  name: 'ListaClientes',
+  data() {
+    return {
+      clientes: [],
+    }
+  },
+  mounted() {
+    const token = localStorage.getItem('token')
+
+    if (!token) {
+      console.warn('Usuário não autenticado')
+      return
+    }
+
+    axios
+      .get('http://localhost:3000/clientes', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        this.clientes = response.data
+      })
+      .catch((error) => {
+        console.error('Erro ao buscar clientes:', error)
+      })
+  },
+}
+</script>

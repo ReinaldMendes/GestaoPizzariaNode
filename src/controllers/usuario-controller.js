@@ -35,12 +35,21 @@ export const store = async (req, res) => {
     if (!req.user) {
       return res.status(403).json({ error: "User not authenticated" });
     }
-    const { text } = req.body;
-    const user = req.user._id;
-    const content = await User.create({ text, user });
-    res.status(201).json(content);
+
+    const { name, email, password, role } = req.body;
+
+    // Verifica se já existe usuário com email
+    const userExistente = await User.findOne({ email }).exec();
+    if(userExistente) {
+      return res.status(400).json({ error: 'Já existe usuário com esse email' });
+    }
+
+    // Cria o usuário
+    const novoUser = await User.create({ name, email, password, role });
+
+    res.status(201).json(novoUser);
   } catch (error) {
-    res.status(400).send(error);
+    res.status(400).json({ error: error.message || error });
   }
 };
 
