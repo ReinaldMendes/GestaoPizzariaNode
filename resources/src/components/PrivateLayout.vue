@@ -21,13 +21,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const userRole = ref('')
 
-onMounted(() => {
+// Carrega e observa o papel do usuário (reage a mudanças no localStorage)
+watchEffect(() => {
   const userRaw = localStorage.getItem('user')
 
   if (userRaw) {
@@ -38,6 +39,8 @@ onMounted(() => {
       console.error('Erro ao ler user do localStorage:', error)
       userRole.value = ''
     }
+  } else {
+    userRole.value = ''
   }
 })
 
@@ -47,6 +50,7 @@ function logout() {
   router.push('/login')
 }
 </script>
+
 
 <style scoped>
 .layout {

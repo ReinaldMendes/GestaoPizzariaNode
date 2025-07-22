@@ -5,7 +5,9 @@
       <form @submit.prevent="login">
         <input v-model="email" type="email" placeholder="E-mail" required />
         <input v-model="password" type="password" placeholder="Senha" required />
-        <button type="submit">Entrar</button>
+        <button type="submit" :disabled="loading">
+          {{ loading ? "Entrando..." : "Entrar" }}
+        </button>
       </form>
       <p v-if="erro" class="error">{{ erro }}</p>
     </div>
@@ -20,8 +22,11 @@ const router = useRouter()
 const email = ref('')
 const password = ref('')
 const erro = ref('')
+const loading = ref(false)
 
 async function login() {
+  erro.value = ''
+  loading.value = true
   try {
     const res = await fetch('http://localhost:3000/usuario/login', {
       method: 'POST',
@@ -30,12 +35,16 @@ async function login() {
     })
 
     const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Erro ao fazer login')
+    if (!res.ok) {
+      throw new Error(data.error || 'Erro ao fazer login')
+    }
 
     localStorage.setItem('token', data.token)
     router.push('/dashboard')
   } catch (e) {
     erro.value = e.message
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -80,10 +89,16 @@ form button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  transition: 0.3s;
 }
 
-form button:hover {
+form button:hover:enabled {
   background-color: #c0392b;
+}
+
+form button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 .error {

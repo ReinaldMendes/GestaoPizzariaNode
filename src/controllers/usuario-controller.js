@@ -18,17 +18,31 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email }).exec();
-    if (user && (await user.isValidPassword(req.body.password))) {
-      const token = jwtServices.generateAcessToken(user);
-      res.json({ user, token });
-    } else {
-      res.status(404).json({ error: "Email or password incorrect" });
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' })
     }
+
+    const user = await User.findOne({ email }).exec()
+
+    if (!user) {
+      return res.status(401).json({ error: 'Email ou senha incorretos' })
+    }
+
+    const valid = await user.isValidPassword(password)
+    if (!valid) {
+      return res.status(401).json({ error: 'Email ou senha incorretos' })
+    }
+
+    const token = jwtServices.generateAcessToken(user)
+    return res.status(200).json({ user: { id: user._id, email: user.email }, token })
   } catch (error) {
-    res.status(400).send(error.message);
+    console.error('Erro no login:', error)
+    return res.status(500).json({ error: 'Erro interno no servidor' })
   }
-};
+}
+
 
 export const store = async (req, res) => {
   try {
