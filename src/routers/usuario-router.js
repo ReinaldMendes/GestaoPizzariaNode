@@ -10,7 +10,7 @@ import {
 } from "../controllers/usuario-controller.js";
 import jwtAuthenticator from "../middlewares/jwt-autenticator.js";
 import authorizer from "../middlewares/authorizer.js";
-
+//aqui
 const router = Router();
 
 // Rotas públicas
