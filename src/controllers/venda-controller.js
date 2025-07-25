@@ -4,8 +4,9 @@ import Pizza from "../models/pizza-model.js";
 export const index = async (req, res) => {
   try {
     const vendas = await Venda.find()
-      .populate("cliente", "name email") // Popula dados do cliente
-      .populate("produtos.produto", "sabor preco estoque") // Popula dados dos produtos
+      .populate("cliente", "nome email")
+      .populate("usuario", "name email") // novo
+      .populate("produtos.produto", "sabor preco estoque")
       .exec();
     res.json(vendas);
   } catch (error) {
@@ -16,7 +17,8 @@ export const index = async (req, res) => {
 export const show = async (req, res) => {
   try {
     const venda = await Venda.findById(req.params.id)
-      .populate("cliente", "name email")
+      .populate("cliente", "nome email")
+      .populate("usuario", "name email")
       .populate("produtos.produto", "sabor preco estoque")
       .exec();
     if (!venda) {
@@ -30,9 +32,14 @@ export const show = async (req, res) => {
 
 export const store = async (req, res) => {
   try {
-    const { cliente, produtos } = req.body;
+    const { cliente, produtos, usuario } = req.body; // ✅ aqui importa o usuário
+
+    if (!usuario) {
+      return res.status(400).json({ error: "Usuário (vendedor) é obrigatório" });
+    }
 
     let total = 0;
+    const produtosFinal = [];
 
     for (const item of produtos) {
       const pizza = await Pizza.findById(item.produto).exec();
@@ -40,30 +47,60 @@ export const store = async (req, res) => {
         return res.status(404).json({ error: `Produto com ID ${item.produto} não encontrado` });
       }
 
-      // Verifica o estoque
       if (pizza.estoque < item.quantidade) {
         return res
           .status(400)
-          .json({ error: `Estoque insuficiente para a pizza de sabor ${pizza.sabor}` });
+          .json({ error: `Estoque insuficiente para pizza ${pizza.sabor}` });
       }
 
-      // Atualiza o total
-      total += pizza.preco * item.quantidade;
+      const precoUnitario = pizza.preco;
+      const subtotal = precoUnitario * item.quantidade;
+      total += subtotal;
 
-      // Diminui o estoque
       pizza.estoque -= item.quantidade;
       await pizza.save();
+
+      produtosFinal.push({
+        produto: pizza._id,
+        quantidade: item.quantidade,
+        precoUnitario,
+      });
     }
 
-    const venda = await Venda.create({ cliente, produtos, total });
+    const venda = await Venda.create({
+      cliente,
+      usuario, // ✅ agora definido corretamente
+      produtos: produtosFinal,
+      total,
+      retirada: false,
+    });
+
     res.status(201).json(venda);
   } catch (error) {
     res.status(400).send(error.message);
   }
 };
 
-export const update = async (req, res) => {
-  return res.status(400).json({ error: "Atualização de vendas não permitida." });
+
+export const updateRetirada = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { retirada } = req.body;
+
+    const venda = await Venda.findByIdAndUpdate(
+      id,
+      { retirada },
+      { new: true }
+    ).exec();
+
+    if (!venda) {
+      return res.status(404).json({ error: "Venda não encontrada" });
+    }
+
+    res.json(venda);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
 };
 
 export const destroy = async (req, res) => {
@@ -73,7 +110,6 @@ export const destroy = async (req, res) => {
       return res.status(404).json({ error: "Venda não encontrada" });
     }
 
-    // Restaura o estoque ao excluir a venda
     for (const item of venda.produtos) {
       const pizza = await Pizza.findById(item.produto).exec();
       if (pizza) {

@@ -7,7 +7,7 @@ import produto_router from "./routers/produto-router.js";
 import venda_router from "./routers/venda-router.js";
 import pizza_router from "./routers/pizza-router.js";
 import cliente_router from "./routers/cliente-router.js";
-
+import dashboardRoutes from './routers/dashboard-routes.js';
 const app = e();
 
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
@@ -35,4 +35,5 @@ app.use("/vendas", venda_router);
 app.use("/pizzas", pizza_router);
 app.use("/clientes", cliente_router);
 
+app.use('/dashboard', dashboardRoutes);
 app.listen(process.env.API_PORT, () => console.log("Server Running"));
