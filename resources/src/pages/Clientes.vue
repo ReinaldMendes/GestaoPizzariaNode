@@ -63,7 +63,7 @@ const sucesso = ref('')
 const erro = ref('')
 
 const usuarioRole = localStorage.getItem('role') || ''
-const API = 'http://localhost:3000/clientes'
+const API = import.meta.env.VITE_API_URL +'/clientes'
 
 axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
 

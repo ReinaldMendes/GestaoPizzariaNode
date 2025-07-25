@@ -94,10 +94,10 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import PrivateLayout from "../components/PrivateLayout.vue";
 
-const API_VENDAS = "http://localhost:3000/vendas";
-const API_CLIENTES = "http://localhost:3000/clientes";
-const API_PIZZAS = "http://localhost:3000/pizzas";
-const API_USUARIOS = "http://localhost:3000/usuario"; // rota correta
+const API_VENDAS =import.meta.env.VITE_API_URL +"/vendas";
+const API_CLIENTES = import.meta.env.VITE_API_URL+"/clientes";
+const API_PIZZAS =import.meta.env.VITE_API_URL+"/pizzas";
+const API_USUARIOS = import.meta.env.VITE_API_URL+"/usuario"; // rota correta
 
 axios.defaults.headers.common["Authorization"] = `Bearer ${localStorage.getItem("token")}`;
 

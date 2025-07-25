@@ -47,7 +47,7 @@ const novoUsuario = ref({
 const sucesso = ref('')
 const erro = ref('')
 
-const API = 'http://localhost:3000/usuario'
+const API =import.meta.env.VITE_API_URL+'/usuario'
 
 // Adiciona o token JWT do localStorage no cabeçalho de todas as requisições
 axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`

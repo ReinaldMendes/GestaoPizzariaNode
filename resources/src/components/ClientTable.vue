@@ -28,7 +28,7 @@
 
 <script>
 import axios from 'axios'
-
+const API_URL = import.meta.env.VITE_API_URL+"/clientes"
 export default {
   name: 'ListaClientes',
   data() {
@@ -45,7 +45,7 @@ export default {
     }
 
     axios
-      .get('http://localhost:3000/clientes', {
+      .get(API_URL, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

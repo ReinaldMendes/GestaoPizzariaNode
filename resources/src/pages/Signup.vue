@@ -24,7 +24,7 @@
   <script setup>
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
-  
+  const API_SIGNUP = import.meta.env.VITE_API_URL +"/usuario/signup"
   const router = useRouter()
   const name = ref('')
   const email = ref('')
@@ -34,7 +34,7 @@
   
   async function signup() {
   try {
-    const res = await fetch('http://localhost:3000/usuario/signup', {
+    const res = await fetch(API_SIGNUP, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

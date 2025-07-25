@@ -57,7 +57,7 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import PrivateLayout from "../components/PrivateLayout.vue";
 
-const API_PIZZAS = "http://localhost:3000/pizzas";
+const API_PIZZAS = import.meta.env.VITE_API_URL +"/pizzas";
 
 axios.defaults.headers.common["Authorization"] = `Bearer ${localStorage.getItem("token")}`;
 
