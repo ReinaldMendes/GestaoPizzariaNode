@@ -1,8 +1,15 @@
 <template>
   <div class="layout">
     <header>
-      <h1>🍕 Pizzaria - Gestão</h1>
-      <button class="mobile-menu-btn" @click="menuAberto = !menuAberto">☰</button>
+      <div class="logo-container">
+        <img :src="logo" alt="Logo" class="logo" />
+        <h1>Pizzaria - Gestão</h1>
+      </div>
+
+      <button class="mobile-menu-btn" @click="menuAberto = !menuAberto" aria-label="Abrir menu">
+        ☰
+      </button>
+
       <button class="logout-btn" @click="logout">Sair</button>
     </header>
 
@@ -24,6 +31,7 @@
 <script setup>
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
+import logo from '../assets/udv_logo.jpg'  // Ajuste o caminho conforme seu projeto
 
 const router = useRouter()
 const userRole = ref('')
@@ -35,8 +43,7 @@ watchEffect(() => {
     try {
       const user = JSON.parse(userRaw)
       userRole.value = user.role || ''
-    } catch (error) {
-      console.error('Erro ao ler user do localStorage:', error)
+    } catch {
       userRole.value = ''
     }
   } else {
@@ -64,7 +71,7 @@ function logout() {
 
 header {
   grid-area: header;
-  background-color: #e74c3c;
+  background-color: #09861a;
   color: white;
   padding: 0 1rem;
   display: flex;
@@ -73,6 +80,36 @@ header {
   position: relative;
 }
 
+/* Container do logo e título juntos */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-container h1 {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Botão menu mobile */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+}
+
+/* Botão logout */
 .logout-btn {
   background: white;
   color: #e74c3c;
@@ -85,15 +122,6 @@ header {
 
 .logout-btn:hover {
   background: #ffe5e5;
-}
-
-.mobile-menu-btn {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  color: white;
-  cursor: pointer;
 }
 
 nav {
@@ -157,6 +185,12 @@ main {
     gap: 1rem;
     background-color: #f1f1f1;
     padding: 1rem;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
 }
 </style>
