@@ -23,7 +23,7 @@ router.use(authorizer("ADMINISTRATOR"));
 
 // Rotas privadas
 router.get("/", index);         // Listar todos
-router.get("/:id", show);       // Buscar por ID
+router.get("/:id([0-9a-fA-F]{24})", show);    // Buscar por ID
 router.post("/", store);        // Criar
 router.put("/:id", update);     // Atualizar
 router.delete("/:id", destroy); // Deletar

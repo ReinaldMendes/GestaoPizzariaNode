@@ -5,19 +5,16 @@ import {
   store,
   updateRetirada,
   destroy,
+  vendasMensal,
 } from "../controllers/venda-controller.js";
-import jwtAuthenticator from "../middlewares/jwt-autenticator.js";
-import authorizer from "../middlewares/authorizer.js";
 
 const router = Router();
 
-router.use(jwtAuthenticator);
-router.use(authorizer("ADMINISTRATOR"));
-
+router.get("/mensal", vendasMensal);
 router.get("/", index);
-router.get("/:id", show);
+router.get("/:id([0-9a-fA-F]{24})", show);
 router.post("/", store);
-router.put("/:id/retirada", updateRetirada); // Novo endpoint
-router.delete("/:id", destroy);
+router.put("/:id([0-9a-fA-F]{24})/retirada", updateRetirada);
+router.delete("/:id([0-9a-fA-F]{24})", destroy);
 
 export default router;

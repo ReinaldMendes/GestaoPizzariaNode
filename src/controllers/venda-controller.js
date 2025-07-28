@@ -14,21 +14,32 @@ export const index = async (req, res) => {
   }
 };
 
+import mongoose from 'mongoose';
+
 export const show = async (req, res) => {
+  const id = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "ID inválido" });
+  }
+
   try {
-    const venda = await Venda.findById(req.params.id)
+    const venda = await Venda.findById(id)
       .populate("cliente", "nome email")
       .populate("usuario", "name email")
       .populate("produtos.produto", "sabor preco estoque")
       .exec();
+
     if (!venda) {
       return res.status(404).json({ error: "Venda não encontrada" });
     }
+
     res.json(venda);
   } catch (error) {
     res.status(400).send(error.message);
   }
 };
+
 
 export const store = async (req, res) => {
   try {
@@ -122,5 +133,57 @@ export const destroy = async (req, res) => {
     res.status(204).json();
   } catch (error) {
     res.status(400).send(error.message);
+  }
+};
+export const vendasMensal = async (req, res) => {
+  console.log("Query params recebidos:", req.query);
+  try {
+    const { dataInicio, dataFim } = req.query;
+    // Filtros de data recebidos via query
+    // Exemplo: /vendas/mensal?dataInicio=2025-01-01&dataFim=2025-06-30
+    
+  
+
+    const filtro = {};
+
+if (dataInicio || dataFim) {
+  filtro.dataVenda = {};
+  if (dataInicio) filtro.dataVenda.$gte = new Date(dataInicio);
+  if (dataFim) filtro.dataVenda.$lte = new Date(dataFim);
+}
+
+const resultados = await Venda.aggregate([
+  { $match: filtro },
+  {
+    $group: {
+      _id: {
+        ano: { $year: "$dataVenda" },
+        mes: { $month: "$dataVenda" }
+      },
+      totalVendas: { $sum: "$total" }
+    }
+  },
+  {
+    $sort: { "_id.ano": 1, "_id.mes": 1 }
+  }
+]);
+
+
+    // Formata o resultado para algo mais amigável
+    const meses = [
+      "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+      "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+    ];
+
+    const resposta = resultados.map(item => ({
+      ano: item._id.ano,
+      mesNum: item._id.mes,
+      mes: meses[item._id.mes - 1],
+      total: item.totalVendas
+    }));
+
+    res.json(resposta);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };

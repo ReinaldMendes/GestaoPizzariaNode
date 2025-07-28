@@ -48,6 +48,7 @@
       </form>
 
       <h2>Lista de Vendas</h2>
+
       <table v-if="vendas.length" class="vendas-table">
         <thead>
           <tr>
@@ -60,7 +61,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="venda in vendas" :key="venda._id">
+          <tr v-for="venda in vendasPaginaAtual" :key="venda._id">
             <td>{{ venda.cliente?.nome || '—' }}</td>
             <td>{{ venda.usuario?.name || '—' }}</td>
             <td>
@@ -84,20 +85,47 @@
           </tr>
         </tbody>
       </table>
+
       <p v-else>Nenhuma venda registrada ainda.</p>
+
+      <!-- Paginação -->
+      <div v-if="vendas.length > itensPorPagina" class="paginacao">
+        <button 
+          @click="paginaAtual--" 
+          :disabled="paginaAtual === 1"
+        >
+          Anterior
+        </button>
+
+        <button
+          v-for="page in totalPaginas"
+          :key="page"
+          @click="paginaAtual = page"
+          :class="{ ativo: paginaAtual === page }"
+        >
+          {{ page }}
+        </button>
+
+        <button 
+          @click="paginaAtual++" 
+          :disabled="paginaAtual === totalPaginas"
+        >
+          Próximo
+        </button>
+      </div>
     </div>
   </PrivateLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 import PrivateLayout from "../components/PrivateLayout.vue";
 
-const API_VENDAS =import.meta.env.VITE_API_URL +"/vendas";
-const API_CLIENTES = import.meta.env.VITE_API_URL+"/clientes";
-const API_PIZZAS =import.meta.env.VITE_API_URL+"/pizzas";
-const API_USUARIOS = import.meta.env.VITE_API_URL+"/usuario"; // rota correta
+const API_VENDAS = import.meta.env.VITE_API_URL + "/vendas";
+const API_CLIENTES = import.meta.env.VITE_API_URL + "/clientes";
+const API_PIZZAS = import.meta.env.VITE_API_URL + "/pizzas";
+const API_USUARIOS = import.meta.env.VITE_API_URL + "/usuario";
 
 axios.defaults.headers.common["Authorization"] = `Bearer ${localStorage.getItem("token")}`;
 
@@ -111,7 +139,6 @@ const erro = ref("");
 
 const usuarioSelecionado = ref("");
 
-// Dados para nova venda
 const novaVenda = ref({
   cliente: "",
   pizzas: [
@@ -120,6 +147,19 @@ const novaVenda = ref({
       quantidade: 1,
     },
   ],
+});
+
+// PAGINAÇÃO
+const itensPorPagina = 10;
+const paginaAtual = ref(1);
+
+const totalPaginas = computed(() => {
+  return Math.ceil(vendas.value.length / itensPorPagina);
+});
+
+const vendasPaginaAtual = computed(() => {
+  const start = (paginaAtual.value - 1) * itensPorPagina;
+  return vendas.value.slice(start, start + itensPorPagina);
 });
 
 // Carregar dados
@@ -166,8 +206,7 @@ onMounted(() => {
   carregarUsuarios();
 });
 
-// Manipulação do formulário
-
+// Form handlers
 const adicionarPizza = () => {
   novaVenda.value.pizzas.push({ pizza: "", quantidade: 1 });
 };
@@ -226,6 +265,7 @@ const criarVenda = async () => {
     usuarioSelecionado.value = "";
     carregarVendas();
     carregarPizzas();
+    paginaAtual.value = 1; // volta para página 1 após nova venda
     setTimeout(() => (sucesso.value = ""), 3000);
   } catch (e) {
     erro.value = "Erro ao registrar venda: " + (e.response?.data?.error || e.message);
@@ -295,6 +335,7 @@ const removerVenda = async (id) => {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .produto-item button {
@@ -304,6 +345,7 @@ const removerVenda = async (id) => {
   padding: 0.3rem 0.6rem;
   cursor: pointer;
   border-radius: 4px;
+  margin-left: auto;
 }
 
 .produto-item button:hover {
@@ -313,6 +355,8 @@ const removerVenda = async (id) => {
 .vendas-table {
   width: 100%;
   border-collapse: collapse;
+  overflow-x: auto;
+  display: block;
 }
 
 .vendas-table th,
@@ -321,6 +365,7 @@ const removerVenda = async (id) => {
   border: 1px solid #ddd;
   text-align: left;
   vertical-align: top;
+  min-width: 120px;
 }
 
 .vendas-table th {
@@ -342,5 +387,58 @@ const removerVenda = async (id) => {
   color: red;
   margin-bottom: 1rem;
   font-weight: bold;
+}
+
+.paginacao {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.paginacao button {
+  background-color: #0c7c59;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.paginacao button[disabled] {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.paginacao button.ativo {
+  background-color: #095c45;
+}
+
+@media (max-width: 600px) {
+  .venda-form {
+    gap: 0.5rem;
+  }
+
+  .produto-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .produto-item button {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .vendas-table th,
+  .vendas-table td {
+    min-width: 80px;
+    font-size: 0.9rem;
+  }
+
+  .vendas-page {
+    padding: 1rem;
+  }
 }
 </style>

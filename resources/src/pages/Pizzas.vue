@@ -26,28 +26,30 @@
 
       <!-- Lista de pizzas -->
       <h2>Lista de Pizzas</h2>
-      <table v-if="pizzas.length" class="pizzas-table">
-        <thead>
-          <tr>
-            <th>Sabor</th>
-            <th>Preço (R$)</th>
-            <th>Estoque</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="pizza in pizzas" :key="pizza._id">
-            <td>{{ pizza.sabor }}</td>
-            <td>{{ pizza.preco.toFixed(2) }}</td>
-            <td>{{ pizza.estoque }}</td>
-            <td>
-              <button @click="editarPizza(pizza)">Editar</button>
-              <button @click="removerPizza(pizza._id)" class="danger">Excluir</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-else>Nenhuma pizza cadastrada ainda.</p>
+      <div class="table-wrapper">
+        <table v-if="pizzas.length" class="pizzas-table">
+          <thead>
+            <tr>
+              <th>Sabor</th>
+              <th>Preço (R$)</th>
+              <th>Estoque</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="pizza in pizzas" :key="pizza._id">
+              <td>{{ pizza.sabor }}</td>
+              <td>{{ pizza.preco.toFixed(2) }}</td>
+              <td>{{ pizza.estoque }}</td>
+              <td>
+                <button @click="editarPizza(pizza)">Editar</button>
+                <button @click="removerPizza(pizza._id)" class="danger">Excluir</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else>Nenhuma pizza cadastrada ainda.</p>
+      </div>
     </div>
   </PrivateLayout>
 </template>
@@ -134,23 +136,36 @@ const removerPizza = async (id) => {
   padding: 2rem;
   max-width: 900px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .pizza-form {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
+  align-items: flex-end;
+}
+
+.pizza-form label {
+  flex-basis: 100%;
+  font-weight: 600;
 }
 
 .pizza-form input {
   padding: 0.5rem;
   font-size: 1rem;
+  flex: 1 1 30%;
+  min-width: 150px;
+  box-sizing: border-box;
 }
 
 .form-actions {
   display: flex;
   gap: 0.5rem;
+  flex-basis: 100%;
+  justify-content: flex-start;
+  margin-top: 0.5rem;
 }
 
 .pizza-form button {
@@ -161,6 +176,7 @@ const removerPizza = async (id) => {
   font-weight: bold;
   border-radius: 4px;
   cursor: pointer;
+  min-width: 120px;
 }
 
 .cancel-btn {
@@ -171,9 +187,14 @@ const removerPizza = async (id) => {
   background-color: #095c45;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+}
+
 .pizzas-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 500px;
 }
 
 .pizzas-table th,
@@ -181,6 +202,7 @@ const removerPizza = async (id) => {
   padding: 0.75rem;
   border: 1px solid #ddd;
   text-align: left;
+  white-space: nowrap;
 }
 
 .pizzas-table th {
@@ -213,10 +235,53 @@ const removerPizza = async (id) => {
 .success-message {
   color: green;
   font-weight: bold;
+  margin-bottom: 1rem;
 }
 
 .error-message {
   color: red;
   font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 720px) {
+  .pizza-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pizza-form label {
+    flex-basis: auto;
+  }
+
+  .pizza-form input {
+    flex-basis: 100%;
+    min-width: auto;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .pizzas-table {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .pizzas-table th,
+  .pizzas-table td {
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+
+  .pizza-form button {
+    font-size: 0.9rem;
+  }
 }
 </style>

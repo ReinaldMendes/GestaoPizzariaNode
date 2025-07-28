@@ -15,7 +15,7 @@ router.use(jwtAuthenticator);
 router.use(authorizer("ADMINISTRATOR"));
 
 router.get("/", index); // Listar todas as pizzas
-router.get("/:id", show); // Buscar uma pizza por ID
+router.get("/:id([0-9a-fA-F]{24})", show); // Buscar uma pizza por ID
 router.post("/", store); // Criar uma nova pizza
 router.put("/:id", update); // Atualizar uma pizza por ID
 router.delete("/:id", destroy); // Deletar uma pizza por ID

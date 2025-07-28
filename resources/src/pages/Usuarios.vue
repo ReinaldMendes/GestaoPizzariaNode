@@ -3,7 +3,6 @@
     <div class="usuarios-page">
       <h1>Usuários 👤</h1>
 
-      <!-- Mensagens -->
       <p v-if="sucesso" class="success-message">{{ sucesso }}</p>
       <p v-if="erro" class="error-message">{{ erro }}</p>
 
@@ -20,19 +19,56 @@
       </form>
 
       <h2>Lista de Usuários</h2>
-      <ul v-if="usuarios.length">
-        <li v-for="usuario in usuarios" :key="usuario._id">
-          <strong>{{ usuario.name }}</strong> - {{ usuario.email }} - {{ usuario.role }}
-          <button @click="removerUsuario(usuario._id)">Remover</button>
-        </li>
-      </ul>
+
+      <div v-if="usuariosPaginados.length" class="usuarios-table-wrapper">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Papel</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="usuario in usuariosPaginados" :key="usuario._id">
+              <td>{{ usuario.name }}</td>
+              <td>{{ usuario.email }}</td>
+              <td>{{ usuario.role }}</td>
+              <td>
+                <button @click="removerUsuario(usuario._id)">Remover</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <p v-else>Nenhum usuário cadastrado ainda.</p>
+
+      <!-- Paginação -->
+      <div v-if="usuarios.length > itensPorPagina" class="pagination">
+        <button :disabled="paginaAtual === 1" @click="paginaAtual--" aria-label="Página anterior">
+          &laquo; Anterior
+        </button>
+        <button
+          v-for="page in totalPaginas"
+          :key="page"
+          :class="{ active: paginaAtual === page }"
+          @click="paginaAtual = page"
+          aria-label="'Ir para página ' + page"
+        >
+          {{ page }}
+        </button>
+        <button :disabled="paginaAtual === totalPaginas" @click="paginaAtual++" aria-label="Próxima página">
+          Próximo &raquo;
+        </button>
+      </div>
     </div>
   </PrivateLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import PrivateLayout from '../components/PrivateLayout.vue'
 
@@ -47,10 +83,21 @@ const novoUsuario = ref({
 const sucesso = ref('')
 const erro = ref('')
 
-const API =import.meta.env.VITE_API_URL+'/usuario'
-
-// Adiciona o token JWT do localStorage no cabeçalho de todas as requisições
+const API = import.meta.env.VITE_API_URL + '/usuario'
 axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+
+// Paginação
+const itensPorPagina = 10
+const paginaAtual = ref(1)
+
+const totalPaginas = computed(() => {
+  return Math.ceil(usuarios.value.length / itensPorPagina)
+})
+
+const usuariosPaginados = computed(() => {
+  const start = (paginaAtual.value - 1) * itensPorPagina
+  return usuarios.value.slice(start, start + itensPorPagina)
+})
 
 const carregarUsuarios = async () => {
   try {
@@ -68,11 +115,10 @@ const criarUsuario = async () => {
     const response = await axios.post(API, novoUsuario.value)
     usuarios.value.push(response.data)
     sucesso.value = 'Usuário criado com sucesso!'
-    // limpa os campos
     novoUsuario.value = { name: '', email: '', password: '', role: '' }
-
-    // sumir a mensagem após 3 segundos
-    setTimeout(() => sucesso.value = '', 3000)
+    setTimeout(() => (sucesso.value = ''), 3000)
+    // Vai para última página para mostrar o novo usuário
+    paginaAtual.value = totalPaginas.value
   } catch (error) {
     erro.value = 'Erro ao cadastrar usuário: ' + (error.response?.data?.error || error.message)
   }
@@ -83,6 +129,10 @@ const removerUsuario = async (id) => {
   try {
     await axios.delete(`${API}/${id}`)
     usuarios.value = usuarios.value.filter(u => u._id !== id)
+    // Ajusta página se necessário
+    if (usuariosPaginados.value.length === 0 && paginaAtual.value > 1) {
+      paginaAtual.value--
+    }
   } catch (error) {
     erro.value = 'Erro ao remover usuário: ' + (error.response?.data?.error || error.message)
   }
@@ -96,7 +146,7 @@ onMounted(() => {
 <style scoped>
 .usuarios-page {
   padding: 2rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -109,38 +159,54 @@ onMounted(() => {
 
 .usuario-form input,
 .usuario-form select {
-  padding: 0.5rem;
+  padding: 0.75rem;
   font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
 .usuario-form button {
-  padding: 0.5rem;
+  padding: 0.75rem;
   background-color: #0c7c59;
   color: white;
   border: none;
   cursor: pointer;
   font-weight: bold;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .usuario-form button:hover {
   background-color: #095c45;
 }
 
-ul {
-  list-style-type: none;
-  padding: 0;
+.usuarios-table-wrapper {
+  overflow-x: auto;
 }
 
-li {
-  padding: 0.5rem;
-  border-bottom: 1px solid #ccc;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.usuarios-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  min-width: 600px;
 }
 
-li button {
+.usuarios-table th,
+.usuarios-table td {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.usuarios-table th {
+  background-color: #0c7c59;
+  color: white;
+}
+
+.usuarios-table tr:hover {
+  background-color: #f5f5f5;
+}
+
+.usuarios-table button {
   background-color: red;
   color: white;
   border: none;
@@ -149,7 +215,7 @@ li button {
   border-radius: 4px;
 }
 
-li button:hover {
+.usuarios-table button:hover {
   background-color: darkred;
 }
 
@@ -163,5 +229,58 @@ li button:hover {
   color: red;
   margin-bottom: 1rem;
   font-weight: bold;
+}
+
+/* PAGINAÇÃO */
+.pagination {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+  user-select: none;
+}
+
+.pagination button {
+  background-color: #0c7c59;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  min-width: 36px;
+  transition: background-color 0.3s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #095c45;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pagination button.active {
+  background-color: #095c45;
+  cursor: default;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .usuarios-page {
+    padding: 1rem;
+  }
+
+  .usuarios-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .usuario-form {
+    gap: 0.75rem;
+  }
 }
 </style>

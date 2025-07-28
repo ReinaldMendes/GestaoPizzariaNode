@@ -1,26 +1,32 @@
 <template>
   <PrivateLayout>
-    <div class="dashboard flex h-screen bg-gray-100">
-      <Sidebar />
+    <div class="p-4 md:p-8 bg-gray-100 min-h-screen">
+      <h1 class="text-3xl font-bold text-gray-800 mb-6">Dashboard 🍕</h1>
 
-      <div class="flex-1 p-6 overflow-auto">
-        <h1 class="text-3xl font-bold mb-6 text-gray-800">Dashboard 🍕</h1>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <DashboardCard title="Vendas Mensais" color="blue" icon="bar-chart">
+          <LineChart />
+        </DashboardCard>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div class="bg-white p-4 rounded-2xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4">Vendas Mensais</h2>
-            <LineChart />
-          </div>
-          <div class="bg-white p-4 rounded-2xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4">Produtos Mais Vendidos</h2>
-            <BarChart />
-          </div>
-        </div>
+        <DashboardCard title="Produtos + Vendidos" color="green" icon="shopping-cart">
+          <BarChart />
+        </DashboardCard>
 
-        <div class="bg-white p-4 rounded-2xl shadow-lg">
-          <h2 class="text-xl font-semibold mb-4">Clientes Recentes</h2>
+        <DashboardCard title="Clientes Recentes" color="purple" icon="users">
           <ClientTable />
-        </div>
+        </DashboardCard>
+
+        <DashboardCard title="Pedidos Abertos" color="yellow" icon="clipboard-list">
+          <p class="text-center text-gray-600">em breve...</p>
+        </DashboardCard>
+
+        <DashboardCard title="Estoque Baixo" color="red" icon="alert-triangle">
+          <p class="text-center text-gray-600">em breve...</p>
+        </DashboardCard>
+
+        <DashboardCard title="Faturamento Total" color="indigo" icon="dollar-sign">
+          <p class="text-center text-xl font-bold text-indigo-700">R$ 12.345,67</p>
+        </DashboardCard>
       </div>
     </div>
   </PrivateLayout>
@@ -28,19 +34,8 @@
 
 <script setup>
 import PrivateLayout from '../components/PrivateLayout.vue'
-import Sidebar from '../components/Sidebar.vue'
 import LineChart from '../components/LineChart.vue'
 import BarChart from '../components/BarChart.vue'
 import ClientTable from '../components/ClientTable.vue'
+import DashboardCard from '../components/DashboardCard.vue'
 </script>
-
-<style scoped>
-/* Scroll leve e limpo */
-.dashboard::-webkit-scrollbar {
-  width: 8px;
-}
-.dashboard::-webkit-scrollbar-thumb {
-  background-color: #cbd5e0;
-  border-radius: 8px;
-}
-</style>

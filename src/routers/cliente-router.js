@@ -15,7 +15,7 @@ router.use(jwtAuthenticator);
 router.use(authorizer("ADMINISTRATOR"));
 
 router.get("/", index); // Listar todos os clientes
-router.get("/:id", show); // Buscar um cliente por ID
+router.get("/:id([0-9a-fA-F]{24})", show); // Buscar um cliente por ID
 router.post("/", store); // Criar um novo cliente
 router.put("/:id", update); // Atualizar um cliente por ID
 router.delete("/:id", destroy); // Deletar um cliente por ID
