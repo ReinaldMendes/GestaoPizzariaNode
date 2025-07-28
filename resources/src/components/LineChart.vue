@@ -19,7 +19,8 @@ import axios from 'axios'
 
 const inicio = ref(null)
 const fim = ref(null)
-const total = ref(null)
+const total = ref(0)
+
 
 const API_VENDAS_MENSAL = import.meta.env.VITE_API_URL + '/vendas/mensal'
 
@@ -38,7 +39,7 @@ async function carregarTotal() {
 
     const vendasData = response.data
 
-    total.value = vendasData.reduce((acc, item) => acc + item.total, 0)
+    total.value = vendasData.reduce((acc, item) => acc + item.totalVendas, 0)
   } catch (error) {
     console.error('Erro ao carregar total de vendas:', error)
   }
