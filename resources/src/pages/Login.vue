@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
-    <div class="login-card">
-      <h2>🍕 Bem-vindo à Pizzaria</h2>
+    <div class="login-form">
+      <h2>Promoção Pizzas DAV PG</h2>
       <form @submit.prevent="login">
         <input v-model="email" type="email" placeholder="E-mail" required />
         <input v-model="password" type="password" placeholder="Senha" required />
@@ -11,14 +11,20 @@
       </form>
       <p v-if="erro" class="error">{{ erro }}</p>
     </div>
+    <div class="login-image">
+      <img :src="logo" alt="Promoção Pizzaria" />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-const API_LOGIN = import.meta.env.VITE_API_URL +"/usuario/login"
+import logo from '../assets/udv_logo.jpg' // ajuste o caminho conforme seu projeto
+
+const API_LOGIN = import.meta.env.VITE_API_URL + "/usuario/login"
 const router = useRouter()
+
 const email = ref('')
 const password = ref('')
 const erro = ref('')
@@ -52,51 +58,56 @@ async function login() {
 <style scoped>
 .login-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
-  background: url('/pizzaria-fundo.jpg') center/cover no-repeat;
+  background: #fff;
+  box-shadow: inset 0 0 10px #ccc;
 }
 
-.login-card {
-  background-color: rgba(255, 255, 255, 0.95);
+/* FORMULÁRIO */
+.login-form {
+  flex: 1;
+  max-width: 450px;
+  margin: auto;
   padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  width: 350px;
+  background-color: #fff;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  border-radius: 12px;
   text-align: center;
 }
 
-.login-card h2 {
+.login-form h2 {
+  margin-bottom: 1.5rem;
+  color: #07c4d1;
+  font-weight: 700;
+}
+
+.login-form form input {
+  width: 100%;
+  padding: 0.75rem;
   margin-bottom: 1rem;
-  color: #c0392b;
-}
-
-form input {
-  width: 100%;
-  padding: 0.7rem;
-  margin: 0.5rem 0;
+  border-radius: 6px;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  font-size: 1rem;
 }
 
-form button {
+.login-form form button {
   width: 100%;
-  padding: 0.8rem;
-  background-color: #e74c3c;
-  color: white;
-  font-weight: bold;
+  padding: 0.9rem;
+  background-color: #07c4d1;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 700;
   cursor: pointer;
-  transition: 0.3s;
+  font-size: 1.1rem;
+  transition: background-color 0.3s;
 }
 
-form button:hover:enabled {
+.login-form form button:hover:enabled {
   background-color: #c0392b;
 }
 
-form button:disabled {
+.login-form form button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
@@ -104,6 +115,41 @@ form button:disabled {
 .error {
   margin-top: 1rem;
   color: red;
-  font-weight: bold;
+  font-weight: 700;
+}
+
+/* IMAGEM */
+.login-image {
+  flex: 1;
+  background-color: #f7f7f7;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.login-image img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* RESPONSIVO */
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-form,
+  .login-image {
+    max-width: 100%;
+    flex: none;
+    padding: 1.5rem;
+  }
+
+  .login-image img {
+    max-height: 300px;
+  }
 }
 </style>
