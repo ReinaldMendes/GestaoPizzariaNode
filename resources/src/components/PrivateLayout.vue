@@ -3,7 +3,7 @@
     <header>
       <div class="logo-container">
         <img :src="logo" alt="Logo" class="logo" />
-        <h1>Pizzaria - Gestão</h1>
+        <h1>Gestão - Promoção Pizzas DAV PG</h1>
       </div>
 
       <button class="mobile-menu-btn" @click="menuAberto = !menuAberto" aria-label="Abrir menu">
