@@ -136,54 +136,60 @@ export const destroy = async (req, res) => {
   }
 };
 export const vendasMensal = async (req, res) => {
-  console.log("Query params recebidos:", req.query);
   try {
     const { dataInicio, dataFim } = req.query;
-    // Filtros de data recebidos via query
-    // Exemplo: /vendas/mensal?dataInicio=2025-01-01&dataFim=2025-06-30
-    
-  
 
     const filtro = {};
 
-if (dataInicio || dataFim) {
-  filtro.dataVenda = {};
-  if (dataInicio) filtro.dataVenda.$gte = new Date(dataInicio);
-  if (dataFim) filtro.dataVenda.$lte = new Date(dataFim);
-}
-
-const resultados = await Venda.aggregate([
-  { $match: filtro },
-  {
-    $group: {
-      _id: {
-        ano: { $year: "$dataVenda" },
-        mes: { $month: "$dataVenda" }
-      },
-      totalVendas: { $sum: "$total" }
+    if (dataInicio || dataFim) {
+      filtro.dataVenda = {};
+      if (dataInicio) filtro.dataVenda.$gte = new Date(dataInicio);
+      if (dataFim) filtro.dataVenda.$lte = new Date(dataFim);
+    } else {
+      // Padrão: Ano atual
+      const now = new Date();
+      const inicioAno = new Date(now.getFullYear(), 0, 1);
+      const fimAno = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+      filtro.dataVenda = {
+        $gte: inicioAno,
+        $lte: fimAno
+      };
     }
-  },
-  {
-    $sort: { "_id.ano": 1, "_id.mes": 1 }
-  }
-]);
 
+    const vendasPorMes = await Venda.aggregate([
+      { $match: filtro },
+      {
+        $group: {
+          _id: { $month: "$dataVenda" },
+          totalVendas: { $sum: "$total" },  // <<-- aqui estava "$valorTotal"
+          quantidade: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id": 1 } }
+    ]);
 
-    // Formata o resultado para algo mais amigável
     const meses = [
-      "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-      "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
-    const resposta = resultados.map(item => ({
-      ano: item._id.ano,
-      mesNum: item._id.mes,
-      mes: meses[item._id.mes - 1],
-      total: item.totalVendas
-    }));
+    const resultado = meses.map((mes, index) => {
+      const dadosMes = vendasPorMes.find(v => v._id === index + 1);
+      return {
+        mes,
+        totalVendas: dadosMes ? dadosMes.totalVendas : 0,
+        quantidade: dadosMes ? dadosMes.quantidade : 0
+      };
+    });
 
-    res.json(resposta);
+    res.json(resultado);
+
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Erro ao buscar vendas mensais:', error);
+    res.status(500).json({ erro: 'Erro ao buscar vendas mensais' });
   }
 };
+
+
+
+

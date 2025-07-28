@@ -1,32 +1,29 @@
 <template>
-  <div class="chart-container">
+  <div class="container">
     <div class="filters">
       <input type="date" v-model="inicio" />
       <input type="date" v-model="fim" />
-      <button @click="carregarDadosGrafico">Atualizar</button>
+      <button @click="carregarTotal">Atualizar</button>
     </div>
-    <canvas ref="chart"></canvas>
+
+    <div class="total-card" v-if="total !== null">
+      <h2>Total de Vendas</h2>
+      <p class="valor">R$ {{ total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import Chart from 'chart.js/auto'
 
-// Referência do canvas
-const chart = ref(null)
-let chartInstance = null
+const inicio = ref(null)
+const fim = ref(null)
+const total = ref(null)
 
-// Filtros de data
-const inicio = ref('2025-01-01')
-const fim = ref('2025-06-30')
-
-// URL da API
 const API_VENDAS_MENSAL = import.meta.env.VITE_API_URL + '/vendas/mensal'
 
-// Função para buscar e desenhar o gráfico
-async function carregarDadosGrafico() {
+async function carregarTotal() {
   try {
     const params = {}
     if (inicio.value) params.dataInicio = inicio.value
@@ -40,93 +37,37 @@ async function carregarDadosGrafico() {
     })
 
     const vendasData = response.data
-    console.log('Dados recebidos:', vendasData)
 
-    const labels = vendasData.map(item => `${item.mes} ${item.ano}`)
-    const dataValues = vendasData.map(item => item.total)
-
-    if (chartInstance) chartInstance.destroy()
-
-    chartInstance = new Chart(chart.value, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Vendas',
-          data: dataValues,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.2)',
-          tension: 0.4,
-          fill: true,
-          pointRadius: 4,
-          pointHoverRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: value => `R$ ${value.toLocaleString()}`
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            labels: {
-              font: { size: 14 }
-            }
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-            callbacks: {
-              label: context => `R$ ${context.parsed.y.toLocaleString()}`
-            }
-          }
-        }
-      }
-    })
+    total.value = vendasData.reduce((acc, item) => acc + item.total, 0)
   } catch (error) {
-    console.error('Erro ao carregar dados do gráfico:', error)
+    console.error('Erro ao carregar total de vendas:', error)
   }
 }
 
-// Carrega o gráfico ao montar
 onMounted(() => {
-  carregarDadosGrafico()
-})
-
-// Destroi o gráfico ao desmontar o componente
-onBeforeUnmount(() => {
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
+  carregarTotal()
 })
 </script>
 
 <style scoped>
-.chart-container {
-  position: relative;
-  width: 100%;
-  height: 300px;
-  max-width: 900px;
+.container {
+  max-width: 600px;
   margin: 0 auto;
+  padding: 1rem;
+  text-align: center;
 }
 
 .filters {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
   flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .filters input,
 .filters button {
-  padding: 0.4rem 0.8rem;
+  padding: 0.5rem 0.8rem;
   font-size: 1rem;
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -143,9 +84,23 @@ onBeforeUnmount(() => {
   background-color: #0e9e6e;
 }
 
-@media (max-width: 600px) {
-  .chart-container {
-    height: 250px;
-  }
+.total-card {
+  background-color: #f3f4f6;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.total-card h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.8rem;
+  color: #374151;
+}
+
+.valor {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #10b981;
 }
 </style>
