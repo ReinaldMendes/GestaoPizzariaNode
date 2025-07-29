@@ -189,6 +189,44 @@ export const vendasMensal = async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar vendas mensais' });
   }
 };
+export const maisVendidas = async (req, res) => {
+  try {
+    const resultado = await Venda.aggregate([
+      { $unwind: "$produtos" },
+      {
+        $group: {
+          _id: "$produtos.produto",
+          totalVendida: { $sum: "$produtos.quantidade" }
+        }
+      },
+      {
+        $lookup: {
+          from: "pizza", // nome da coleção no MongoDB (confira no banco, normalmente é plural e minúsculo)
+          localField: "_id",
+          foreignField: "_id",
+          as: "pizza"
+        }
+      },
+      { $unwind: "$pizza" },
+      {
+        $project: {
+          sabor: "$pizza.sabor",
+          totalVendida: 1
+        }
+      },
+      { $sort: { totalVendida: -1 } },
+      { $limit: 10 }
+    ])
+
+    const labels = resultado.map(r => r.sabor)
+    const dados = resultado.map(r => r.totalVendida)
+
+    res.json({ labels, dados })
+  } catch (error) {
+    console.error('Erro ao buscar pizzas mais vendidas:', error)
+    res.status(500).json({ erro: 'Erro ao buscar pizzas mais vendidas' })
+  }
+};
 
 
 

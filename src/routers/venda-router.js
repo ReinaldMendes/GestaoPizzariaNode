@@ -6,10 +6,11 @@ import {
   updateRetirada,
   destroy,
   vendasMensal,
+  maisVendidas,
 } from "../controllers/venda-controller.js";
 
 const router = Router();
-
+router.get("/mais-vendidas", maisVendidas); // nova rota antes do :id
 router.get("/mensal", vendasMensal);
 router.get("/", index);
 router.get("/:id([0-9a-fA-F]{24})", show);
