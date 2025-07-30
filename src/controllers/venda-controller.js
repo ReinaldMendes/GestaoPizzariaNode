@@ -189,7 +189,8 @@ export const vendasMensal = async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar vendas mensais' });
   }
 };
-export const maisVendidas = async (req, res) => {
+
+export async function maisVendidas(req, res) {
   try {
     const resultado = await Venda.aggregate([
       { $unwind: "$produtos" },
@@ -201,7 +202,7 @@ export const maisVendidas = async (req, res) => {
       },
       {
         $lookup: {
-          from: "pizza", // nome da coleção no MongoDB (confira no banco, normalmente é plural e minúsculo)
+          from: "pizzas", // nome da coleção no MongoDB, veja se é exatamente esse
           localField: "_id",
           foreignField: "_id",
           as: "pizza"
@@ -210,23 +211,26 @@ export const maisVendidas = async (req, res) => {
       { $unwind: "$pizza" },
       {
         $project: {
+          _id: 0,
           sabor: "$pizza.sabor",
           totalVendida: 1
         }
       },
       { $sort: { totalVendida: -1 } },
       { $limit: 10 }
-    ])
+    ]);
 
-    const labels = resultado.map(r => r.sabor)
-    const dados = resultado.map(r => r.totalVendida)
+    const labels = resultado.map((item) => item.sabor);
+    const dados = resultado.map((item) => item.totalVendida);
 
-    res.json({ labels, dados })
-  } catch (error) {
-    console.error('Erro ao buscar pizzas mais vendidas:', error)
-    res.status(500).json({ erro: 'Erro ao buscar pizzas mais vendidas' })
+    res.json({ labels, dados });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao buscar pizzas mais vendidas" });
   }
 };
+
+
 
 
 
