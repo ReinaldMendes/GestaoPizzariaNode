@@ -29,6 +29,7 @@ app.use(cors({
 
   
 app.use(e.json());
+
 app.use("/vendas", venda_router);
 app.use("/usuario", usuario_router);
 app.use("/produtos", produto_router);
