@@ -1,7 +1,7 @@
 <template>
   <div class="layout">
     <header>
-      <div class="logo-container">
+      <div class="logo-container" @click="goDashboard" role="button" tabindex="0" @keydown.enter="goDashboard" aria-label="Ir para dashboard">
         <img :src="logo" alt="Logo" class="logo" />
         <h1>Gestão - Promoção Pizzas DAV PG</h1>
       </div>
@@ -13,7 +13,7 @@
       <button class="logout-btn" @click="logout">Sair</button>
     </header>
 
-    <nav :class="{ aberto: menuAberto }">
+    <nav :class="{ aberto: menuAberto }" @click="menuAberto = false">
       <router-link to="/dashboard">Dashboard</router-link>
       <router-link v-if="userRole === 'ADMINISTRATOR'" to="/usuarios">Usuários</router-link>
       <router-link to="/produtos">Produtos</router-link>
@@ -31,7 +31,7 @@
 <script setup>
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import logo from '../assets/udv_logo.jpg'  // Ajuste o caminho conforme seu projeto
+import logo from '../assets/udv_logo.jpg'
 
 const router = useRouter()
 const userRole = ref('')
@@ -55,6 +55,11 @@ function logout() {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
   router.push('/login')
+}
+
+function goDashboard() {
+  menuAberto.value = false
+  router.push('/dashboard')
 }
 </script>
 
@@ -85,6 +90,8 @@ header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
 }
 
 .logo {
@@ -97,6 +104,10 @@ header {
   font-size: 1.4rem;
   font-weight: bold;
   margin: 0;
+  white-space: nowrap;  /* Evita quebrar linha */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Reticências se texto for maior que espaço */
+  max-width: 180px; /* Limita o tamanho no desktop */
 }
 
 /* Botão menu mobile */
@@ -167,6 +178,10 @@ main {
   nav {
     display: flex !important;
   }
+
+  .logo-container h1 {
+    max-width: none;
+  }
 }
 
 @media (max-width: 767px) {
@@ -191,6 +206,12 @@ main {
     right: 0;
     z-index: 10;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  /* Ajusta logo e texto para caber em telas pequenas */
+  .logo-container h1 {
+    font-size: 1rem;
+    max-width: 140px;
   }
 }
 </style>
