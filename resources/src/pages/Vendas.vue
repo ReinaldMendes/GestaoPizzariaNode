@@ -49,7 +49,17 @@
 
       <h2>Lista de Vendas</h2>
 
-      <table v-if="vendas.length" class="vendas-table">
+      <!-- Campo de pesquisa -->
+      <div class="search-container">
+        <input
+          type="text"
+          v-model="filtroVendedor"
+          placeholder="Buscar por vendedor..."
+          class="search-input"
+        />
+      </div>
+
+      <table v-if="vendasFiltradas.length" class="vendas-table">
         <thead>
           <tr>
             <th>Cliente</th>
@@ -89,7 +99,7 @@
       <p v-else>Nenhuma venda registrada ainda.</p>
 
       <!-- Paginação -->
-      <div v-if="vendas.length > itensPorPagina" class="paginacao">
+      <div v-if="vendasFiltradas.length > itensPorPagina" class="paginacao">
         <button 
           @click="paginaAtual--" 
           :disabled="paginaAtual === 1"
@@ -138,6 +148,7 @@ const sucesso = ref("");
 const erro = ref("");
 
 const usuarioSelecionado = ref("");
+const filtroVendedor = ref("");
 
 const novaVenda = ref({
   cliente: "",
@@ -153,13 +164,21 @@ const novaVenda = ref({
 const itensPorPagina = 10;
 const paginaAtual = ref(1);
 
+const vendasFiltradas = computed(() => {
+  if (!filtroVendedor.value.trim()) return vendas.value;
+  const termo = filtroVendedor.value.toLowerCase();
+  return vendas.value.filter((v) =>
+    v.usuario?.name?.toLowerCase().includes(termo)
+  );
+});
+
 const totalPaginas = computed(() => {
-  return Math.ceil(vendas.value.length / itensPorPagina);
+  return Math.ceil(vendasFiltradas.value.length / itensPorPagina);
 });
 
 const vendasPaginaAtual = computed(() => {
   const start = (paginaAtual.value - 1) * itensPorPagina;
-  return vendas.value.slice(start, start + itensPorPagina);
+  return vendasFiltradas.value.slice(start, start + itensPorPagina);
 });
 
 // Carregar dados
@@ -300,6 +319,17 @@ const removerVenda = async (id) => {
   padding: 2rem;
   max-width: 900px;
   margin: 0 auto;
+}
+
+.search-container {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  width: 100%;
+  max-width: 300px;
 }
 
 .venda-form {
