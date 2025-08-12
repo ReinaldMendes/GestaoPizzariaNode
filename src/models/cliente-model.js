@@ -17,7 +17,6 @@ const clienteSchema = new Schema(
       numero: { type: String, required: true, trim: true },
       bairro: { type: String, required: true, trim: true },
       cidade: { type: String, required: true, trim: true },
-    
     },
   },
   { timestamps: true }

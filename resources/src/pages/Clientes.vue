@@ -31,14 +31,19 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cliente in clientesPaginados" :key="cliente._id">
-              <td>{{ cliente.nome }}</td>
-              <td>{{ cliente.telefone }}</td>
-              <td>{{ formatarEndereco(cliente.endereco) }}</td>
-              <td v-if="usuarioRole === 'ADMINISTRATOR'">
-                <button @click="removerCliente(cliente._id)">Remover</button>
-              </td>
-            </tr>
+                <tr
+                  v-for="cliente in clientesPaginados"
+                  :key="cliente._id"
+                  @click="abrirNoGoogleMaps(cliente.endereco)"
+                  style="cursor: pointer;"
+                >
+                  <td>{{ cliente.nome }}</td>
+                  <td>{{ cliente.telefone }}</td>
+                  <td>{{ formatarEndereco(cliente.endereco) }}</td>
+                  <td v-if="usuarioRole === 'ADMINISTRATOR'">
+                    <button @click.stop="removerCliente(cliente._id)">Remover</button>
+                  </td>
+                </tr>
           </tbody>
         </table>
       </div>
@@ -174,6 +179,17 @@ const removerCliente = async (id) => {
     }
   } catch (error) {
     erro.value = 'Erro ao remover cliente: ' + (error.response?.data?.error || error.message)
+  }
+}
+function abrirNoGoogleMaps(endereco) {
+  if (!endereco) return;
+  try {
+    const obj = typeof endereco === 'string' ? JSON.parse(endereco) : endereco;
+    const enderecoFormatado = `${obj.rua} ${obj.numero}, ${obj.bairro}, ${obj.cidade}`;
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoFormatado)}`;
+    window.open(url, '_blank');
+  } catch {
+    console.error('Endereço inválido para abrir no Google Maps');
   }
 }
 

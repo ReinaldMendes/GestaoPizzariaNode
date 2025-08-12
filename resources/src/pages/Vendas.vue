@@ -42,9 +42,16 @@
           <button type="button" @click="removerPizza(index)">Remover</button>
         </div>
 
-        <button type="button" @click="adicionarPizza">Adicionar Pizza</button>
+        <!-- Botões do formulário -->
+        <div class="botoes-form">
+          <button type="button" @click="adicionarPizza" class="btn-adicionar">
+            Adicionar Pizza
+          </button>
 
-        <button type="submit">Registrar Venda</button>
+          <button type="submit" class="btn-registrar">
+            Registrar Venda
+          </button>
+        </div>
       </form>
 
       <h2>Lista de Vendas</h2>
@@ -71,7 +78,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="venda in vendasPaginaAtual" :key="venda._id">
+          <tr 
+            v-for="venda in vendasPaginaAtual" 
+            :key="venda._id"
+            @click="abrirRotaGoogleMaps(venda.cliente?.endereco)" 
+            style="cursor: pointer;"
+          >
             <td>{{ venda.cliente?.nome || '—' }}</td>
             <td>{{ venda.usuario?.name || '—' }}</td>
             <td>
@@ -87,10 +99,11 @@
                 type="checkbox"
                 :checked="venda.retirada"
                 @change="toggleRetirada(venda)"
+                @click.stop
               />
             </td>
             <td>
-              <button @click="removerVenda(venda._id)">Excluir</button>
+              <button @click.stop="removerVenda(venda._id)">Excluir</button>
             </td>
           </tr>
         </tbody>
@@ -123,14 +136,25 @@
           Próximo
         </button>
       </div>
+
+      <!-- Botão imprimir relatório abaixo da lista -->
+      <div class="relatorio-botoes">
+        <button @click="imprimirRelatorio" class="btn-imprimir">
+          Imprimir Relatório PDF
+        </button>
+      </div>
     </div>
   </PrivateLayout>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 import PrivateLayout from "../components/PrivateLayout.vue";
+
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const API_VENDAS = import.meta.env.VITE_API_URL + "/vendas";
 const API_CLIENTES = import.meta.env.VITE_API_URL + "/clientes";
@@ -181,7 +205,17 @@ const vendasPaginaAtual = computed(() => {
   return vendasFiltradas.value.slice(start, start + itensPorPagina);
 });
 
-// Carregar dados
+const abrirRotaGoogleMaps = (endereco) => {
+  if (!endereco || !endereco.rua || !endereco.numero || !endereco.bairro || !endereco.cidade) {
+    alert("Endereço do cliente incompleto ou não disponível.");
+    return;
+  }
+  const enderecoCompleto = `${endereco.rua} ${endereco.numero}, ${endereco.bairro}, ${endereco.cidade}`;
+  const enderecoEncoded = encodeURIComponent(enderecoCompleto);
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${enderecoEncoded}`;
+  window.open(url, "_blank");
+};
+
 const carregarVendas = async () => {
   try {
     const res = await axios.get(API_VENDAS);
@@ -284,7 +318,7 @@ const criarVenda = async () => {
     usuarioSelecionado.value = "";
     carregarVendas();
     carregarPizzas();
-    paginaAtual.value = 1; // volta para página 1 após nova venda
+    paginaAtual.value = 1;
     setTimeout(() => (sucesso.value = ""), 3000);
   } catch (e) {
     erro.value = "Erro ao registrar venda: " + (e.response?.data?.error || e.message);
@@ -312,8 +346,67 @@ const removerVenda = async (id) => {
     erro.value = "Erro ao remover venda: " + (e.response?.data?.error || e.message);
   }
 };
-</script>
 
+// Função para gerar relatório PDF
+const imprimirRelatorio = () => {
+  const doc = new jsPDF();
+
+  const dataHora = new Date().toLocaleString();
+  doc.setFontSize(18);
+  doc.setTextColor("#0c7c59");
+  doc.text("Relatório de Vendas de Pizzas", 14, 22);
+
+  doc.setFontSize(11);
+  doc.setTextColor("#444");
+  doc.text(`Data da impressão: ${dataHora}`, 14, 30);
+
+  // Dados para tabela
+  const dadosTabela = vendasFiltradas.value.map((venda) => {
+    const pizzasDesc = venda.produtos
+      .map(
+        (item) =>
+          `${item.produto.sabor} x ${item.quantidade} = R$ ${(item.precoUnitario * item.quantidade).toFixed(2)}`
+      )
+      .join("\n");
+
+    return [
+      venda.cliente?.nome || "—",
+      venda.usuario?.name || "—",
+      pizzasDesc,
+      venda.total.toFixed(2),
+      venda.retirada ? "Sim" : "Não",
+    ];
+  });
+
+  autoTable(doc, {
+    startY: 38,
+    head: [["Cliente", "Vendedor", "Pizzas", "Total (R$)", "Retirada"]],
+    body: dadosTabela,
+    styles: {
+      fontSize: 10,
+      cellPadding: 4,
+    },
+    headStyles: {
+      fillColor: "#0c7c59",
+      textColor: "white",
+      fontStyle: "bold",
+    },
+    columnStyles: {
+      2: { cellWidth: 70 }, // Coluna pizzas maior
+      3: { halign: "right" },
+      4: { halign: "center" },
+    },
+    didDrawPage: (data) => {
+      const str = `Página ${doc.internal.getNumberOfPages()}`;
+      doc.setFontSize(9);
+      doc.setTextColor("#888");
+      doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+    },
+  });
+
+  doc.save("relatorio_vendas.pdf");
+};
+</script>
 <style scoped>
 .vendas-page {
   padding: 2rem;
@@ -344,21 +437,6 @@ const removerVenda = async (id) => {
   padding: 0.5rem;
   font-size: 1rem;
   width: 100%;
-}
-
-.venda-form button {
-  padding: 0.5rem;
-  background-color: #0c7c59;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  border-radius: 4px;
-  width: fit-content;
-}
-
-.venda-form button:hover {
-  background-color: #095c45;
 }
 
 .produto-item {
@@ -446,29 +524,84 @@ const removerVenda = async (id) => {
   background-color: #095c45;
 }
 
+/* Botões do formulário */
+.botoes-form {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.btn-adicionar {
+  background-color: #0c7c59;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  flex: 1 1 auto;
+  max-width: 150px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-adicionar:hover {
+  background-color: #095c45;
+}
+
+.btn-registrar {
+  background-color: #0c7c59;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+  flex: 1 1 auto;
+  max-width: 180px;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.btn-registrar:hover {
+  background-color: #095c45;
+}
+
+/* Botão imprimir relatório */
+.relatorio-botoes {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-imprimir {
+  background-color: #0c7c59;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.btn-imprimir:hover {
+  background-color: #095c45;
+}
+
+/* Responsividade */
 @media (max-width: 600px) {
-  .venda-form {
-    gap: 0.5rem;
-  }
-
-  .produto-item {
+  .botoes-form {
     flex-direction: column;
-    align-items: stretch;
+    gap: 0.75rem;
   }
 
-  .produto-item button {
-    margin-left: 0;
-    margin-top: 0.5rem;
-  }
-
-  .vendas-table th,
-  .vendas-table td {
-    min-width: 80px;
-    font-size: 0.9rem;
-  }
-
-  .vendas-page {
-    padding: 1rem;
+  .btn-adicionar,
+  .btn-registrar {
+    max-width: 100%;
+    flex: 1 1 100%;
   }
 }
 </style>

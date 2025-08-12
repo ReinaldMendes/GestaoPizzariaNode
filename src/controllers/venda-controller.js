@@ -4,7 +4,10 @@ import Pizza from "../models/pizza-model.js";
 export const index = async (req, res) => {
   try {
     const vendas = await Venda.find()
-      .populate("cliente", "nome email")
+    .populate({
+      path: "cliente",
+      select: "nome endereco telefone" // 🔹 garante que endereco vem junto
+    })
       .populate("usuario", "name email") // novo
       .populate("produtos.produto", "sabor preco estoque")
       .exec();
@@ -25,7 +28,10 @@ export const show = async (req, res) => {
 
   try {
     const venda = await Venda.findById(id)
-      .populate("cliente", "nome email")
+    .populate({
+      path: "cliente",
+      select: "nome endereco telefone" // 🔹 garante que endereco vem junto
+    })
       .populate("usuario", "name email")
       .populate("produtos.produto", "sabor preco estoque")
       .exec();
