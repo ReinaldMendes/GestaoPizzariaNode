@@ -11,7 +11,7 @@ import dashboardRoutes from './routers/dashboard-routes.js';
 const app = e();
 
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174','https://gestaopizzarianode-1.onrender.com'];
-;
+
 
 app.use(cors({
     origin: function(origin, callback){
