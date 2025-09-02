@@ -15,18 +15,6 @@
         <DashboardCard title="Clientes Recentes" color="purple" icon="users">
           <ClientTable />
         </DashboardCard>
-
-        <DashboardCard title="Pedidos Abertos" color="yellow" icon="clipboard-list">
-          <p class="text-center text-gray-600">em breve...</p>
-        </DashboardCard>
-
-        <DashboardCard title="Estoque Baixo" color="red" icon="alert-triangle">
-          <p class="text-center text-gray-600">em breve...</p>
-        </DashboardCard>
-
-        <DashboardCard title="Faturamento Total" color="indigo" icon="dollar-sign">
-          <p class="text-center text-xl font-bold text-indigo-700">R$ 12.345,67</p>
-        </DashboardCard>
       </div>
     </div>
   </PrivateLayout>
