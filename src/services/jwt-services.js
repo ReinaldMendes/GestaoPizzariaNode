@@ -9,7 +9,7 @@ const generateAcessToken = (user) =>
     },
     process.env.JWT_PRIVATE_KEY,
     {
-      expiresIn: "1d",
+      expiresIn: "2d",
     }
   );
 const verifyAcessToken = (token) =>
