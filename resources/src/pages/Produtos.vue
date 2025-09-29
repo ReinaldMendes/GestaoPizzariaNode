@@ -55,12 +55,49 @@
           </thead>
           <tbody>
             <tr v-for="produto in produtosPaginados" :key="produto._id">
-              <td>{{ produto.nome }}</td>
-              <td>{{ produto.descricao }}</td>
-              <td>R$ {{ produto.preco.toFixed(2) }}</td>
-              <td>{{ produto.estoque }}</td>
+              <td v-if="produto.editando">
+                <input v-model="produto.nome" />
+              </td>
+              <td v-else>{{ produto.nome }}</td>
+
+              <td v-if="produto.editando">
+                <input v-model="produto.descricao" />
+              </td>
+              <td v-else>{{ produto.descricao }}</td>
+
+              <td v-if="produto.editando">
+                <input v-model.number="produto.preco" type="number" step="0.01" />
+              </td>
+              <td v-else>R$ {{ produto.preco.toFixed(2) }}</td>
+
+              <td v-if="produto.editando">
+                <input v-model.number="produto.estoque" type="number" />
+              </td>
+              <td v-else>{{ produto.estoque }}</td>
+
               <td v-if="usuarioRole === 'ADMINISTRATOR'">
-                <button @click="removerProduto(produto._id)">Remover</button>
+                <div class="acoes">
+                  <button
+                    v-if="!produto.editando"
+                    class="btn-edit"
+                    @click="editarProduto(produto)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    v-if="produto.editando"
+                    class="btn-save"
+                    @click="salvarEdicao(produto)"
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    class="btn-delete"
+                    @click="removerProduto(produto._id)"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -136,7 +173,7 @@ const produtosPaginados = computed(() => {
 const carregarProdutos = async () => {
   try {
     const response = await axios.get(API);
-    produtos.value = response.data;
+    produtos.value = response.data.map((p) => ({ ...p, editando: false }));
   } catch (error) {
     erro.value =
       "Erro ao carregar produtos: " + (error.response?.data?.error || error.message);
@@ -148,12 +185,11 @@ const criarProduto = async () => {
   erro.value = "";
   try {
     const response = await axios.post(API, novoProduto.value);
-    produtos.value.push(response.data);
+    produtos.value.push({ ...response.data, editando: false });
     sucesso.value = "Produto cadastrado com sucesso!";
     novoProduto.value = { nome: "", descricao: "", preco: 0, estoque: 0 };
     setTimeout(() => (sucesso.value = ""), 3000);
 
-    // Ajusta a página para última para mostrar o novo produto
     paginaAtual.value = totalPaginas.value;
   } catch (error) {
     erro.value =
@@ -167,16 +203,28 @@ const removerProduto = async (id) => {
     await axios.delete(`${API}/${id}`);
     produtos.value = produtos.value.filter((p) => p._id !== id);
 
-    // Ajusta a página caso fique vazia
-    if (
-      produtosPaginados.value.length === 0 &&
-      paginaAtual.value > 1
-    ) {
+    if (produtosPaginados.value.length === 0 && paginaAtual.value > 1) {
       paginaAtual.value--;
     }
   } catch (error) {
     erro.value =
       "Erro ao remover produto: " + (error.response?.data?.error || error.message);
+  }
+};
+
+const editarProduto = (produto) => {
+  produto.editando = true;
+};
+
+const salvarEdicao = async (produto) => {
+  try {
+    const response = await axios.put(`${API}/${produto._id}`, produto);
+    Object.assign(produto, response.data, { editando: false });
+    sucesso.value = "Produto atualizado com sucesso!";
+    setTimeout(() => (sucesso.value = ""), 3000);
+  } catch (error) {
+    erro.value =
+      "Erro ao atualizar produto: " + (error.response?.data?.error || error.message);
   }
 };
 
@@ -251,7 +299,39 @@ onMounted(() => {
   background-color: #f5f5f5;
 }
 
-.produtos-table button {
+/* BOTÕES DE AÇÃO */
+.acoes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-edit {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-edit:hover {
+  background-color: #0056b3;
+}
+
+.btn-save {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-save:hover {
+  background-color: #1e7e34;
+}
+
+.btn-delete {
   background-color: red;
   color: white;
   border: none;
@@ -260,7 +340,7 @@ onMounted(() => {
   border-radius: 4px;
 }
 
-.produtos-table button:hover {
+.btn-delete:hover {
   background-color: darkred;
 }
 
