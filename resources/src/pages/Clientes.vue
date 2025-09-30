@@ -29,8 +29,7 @@
               <th>Nome</th>
               <th>Telefone</th>
               <th>Endereço</th>
-              <!-- Removido o if, ações sempre aparecem -->
-              <th>Ações</th>
+              <th v-if="usuarioRole === 'ADMINISTRATOR'">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -43,7 +42,7 @@
               <td>{{ cliente.nome }}</td>
               <td>{{ cliente.telefone }}</td>
               <td>{{ formatarEndereco(cliente.endereco) }}</td>
-              <td class="actions">
+              <td v-if="usuarioRole === 'ADMINISTRATOR'" class="actions">
                 <button class="edit" @click.stop="abrirModalEdicao(cliente)">✏️</button>
                 <button class="delete" @click.stop="removerCliente(cliente._id)">🗑️</button>
               </td>
@@ -116,6 +115,7 @@ const modalAberto = ref(false)
 const sucesso = ref('')
 const erro = ref('')
 
+const usuarioRole = localStorage.getItem('role') || ''
 const API = import.meta.env.VITE_API_URL + '/clientes'
 
 axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
@@ -253,7 +253,6 @@ function abrirNoGoogleMaps(endereco) {
 
 onMounted(() => carregarClientes())
 </script>
-
 
 <style scoped>
 .clientes-page {

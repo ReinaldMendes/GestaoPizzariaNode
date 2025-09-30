@@ -11,13 +11,16 @@ import authorizer from "../middlewares/authorizer.js";
 
 const router = Router();
 
+// Todas as rotas exigem usuário logado
 router.use(jwtAuthenticator);
-router.use(authorizer("ADMINISTRATOR"));
 
-router.get("/", index); // Listar todos os produtos
-router.get("/:id([0-9a-fA-F]{24})", show);  // Buscar um produto por ID
-router.post("/", store); // Criar produto
-router.put("/:id", update); // Atualizar produto por ID
-router.delete("/:id", destroy); // Deletar produto por ID
+// Rotas acessíveis a qualquer usuário autenticado
+router.get("/", index); 
+router.get("/:id([0-9a-fA-F]{24})", show);
+
+// Rotas restritas a ADMINISTRATOR
+router.post("/", authorizer("ADMINISTRATOR"), store);
+router.put("/:id", authorizer("ADMINISTRATOR"), update);
+router.delete("/:id", authorizer("ADMINISTRATOR"), destroy);
 
 export default router;

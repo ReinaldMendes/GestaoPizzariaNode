@@ -8,6 +8,7 @@ import venda_router from "./routers/venda-router.js";
 import pizza_router from "./routers/pizza-router.js";
 import cliente_router from "./routers/cliente-router.js";
 import dashboardRoutes from './routers/dashboard-routes.js';
+import promocaoRoutes from './routers/promocao-routes.js';
 const app = e();
 
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174','https://gestaopizzarianode-1.onrender.com'];
@@ -35,6 +36,6 @@ app.use("/usuario", usuario_router);
 app.use("/produtos", produto_router);
 app.use("/pizzas", pizza_router);
 app.use("/clientes", cliente_router);
-
+app.use("/promocao/",promocaoRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.listen(process.env.API_PORT, () => console.log("Server Running"));

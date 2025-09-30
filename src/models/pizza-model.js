@@ -16,6 +16,11 @@ const pizzaSchema = new Schema(
       required: true,
       min: 0,
     },
+    custo: {
+      type: Number,
+      required: true,
+      min: 0 // Garante que o custo não seja negativo
+    }
   },
   { timestamps: true }
 );

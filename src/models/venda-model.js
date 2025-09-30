@@ -43,6 +43,11 @@ const vendaSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+    promocao: {
+      type: Schema.Types.ObjectId,
+      ref: 'Promocao',
+      required: false // uma venda pode ou não estar ligada a uma promoção
+    },
   },
   { timestamps: true }
 );

@@ -45,7 +45,12 @@ async function login() {
       throw new Error(data.error || 'Erro ao fazer login')
     }
 
+    // Salva token e role no localStorage
     localStorage.setItem('token', data.token)
+    localStorage.setItem('role', data.user?.role || data.role || '')
+
+    console.log("ROLE recebida:", data.user?.role || data.role)
+
     router.push('/dashboard')
   } catch (e) {
     erro.value = e.message

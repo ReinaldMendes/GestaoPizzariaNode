@@ -15,7 +15,7 @@
 
     <nav :class="{ aberto: menuAberto }" @click="menuAberto = false">
       <router-link to="/dashboard">Dashboard</router-link>
-      <router-link v-if="userRole === 'ADMINISTRATOR'" to="/usuarios">Usuários</router-link>
+      <router-link to="/usuarios">Usuários</router-link>
       <router-link to="/produtos">Produtos</router-link>
       <router-link to="/pizzas">Pizzas</router-link>
       <router-link to="/clientes">Clientes</router-link>

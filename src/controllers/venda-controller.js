@@ -1,14 +1,15 @@
 import Venda from "../models/venda-model.js";
 import Pizza from "../models/pizza-model.js";
+import mongoose from 'mongoose';
 
 export const index = async (req, res) => {
   try {
     const vendas = await Venda.find()
-    .populate({
-      path: "cliente",
-      select: "nome endereco telefone" // 🔹 garante que endereco vem junto
-    })
-      .populate("usuario", "name email") // novo
+      .populate({
+        path: "cliente",
+        select: "nome endereco telefone"
+      })
+      .populate("usuario", "name email")
       .populate("produtos.produto", "sabor preco estoque")
       .exec();
     res.json(vendas);
@@ -16,8 +17,6 @@ export const index = async (req, res) => {
     res.status(400).send(error.message);
   }
 };
-
-import mongoose from 'mongoose';
 
 export const show = async (req, res) => {
   const id = req.params.id;
@@ -28,10 +27,10 @@ export const show = async (req, res) => {
 
   try {
     const venda = await Venda.findById(id)
-    .populate({
-      path: "cliente",
-      select: "nome endereco telefone" // 🔹 garante que endereco vem junto
-    })
+      .populate({
+        path: "cliente",
+        select: "nome endereco telefone"
+      })
       .populate("usuario", "name email")
       .populate("produtos.produto", "sabor preco estoque")
       .exec();
@@ -48,10 +47,15 @@ export const show = async (req, res) => {
 
 
 export const store = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { cliente, produtos, usuario } = req.body; // ✅ aqui importa o usuário
+    const { cliente, produtos, usuario, promocao } = req.body;
 
     if (!usuario) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ error: "Usuário (vendedor) é obrigatório" });
     }
 
@@ -59,41 +63,52 @@ export const store = async (req, res) => {
     const produtosFinal = [];
 
     for (const item of produtos) {
-      const pizza = await Pizza.findById(item.produto).exec();
+      const { produto: pizzaId, quantidade } = item;
+
+      const pizza = await Pizza.findById(pizzaId).session(session).exec();
+
       if (!pizza) {
-        return res.status(404).json({ error: `Produto com ID ${item.produto} não encontrado` });
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: `Produto com ID ${pizzaId} não encontrado` });
       }
 
-      if (pizza.estoque < item.quantidade) {
-        return res
-          .status(400)
-          .json({ error: `Estoque insuficiente para pizza ${pizza.sabor}` });
+      if (pizza.estoque < quantidade) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: `Estoque insuficiente para pizza ${pizza.sabor}` });
       }
 
-      const precoUnitario = pizza.preco;
-      const subtotal = precoUnitario * item.quantidade;
-      total += subtotal;
+      pizza.estoque -= quantidade;
+      await pizza.save({ session });
 
-      pizza.estoque -= item.quantidade;
-      await pizza.save();
+      total += pizza.preco * quantidade;
 
       produtosFinal.push({
         produto: pizza._id,
-        quantidade: item.quantidade,
-        precoUnitario,
+        quantidade,
+        precoUnitario: pizza.preco,
       });
     }
 
-    const venda = await Venda.create({
+    const venda = await Venda.create([{
       cliente,
-      usuario, // ✅ agora definido corretamente
+      usuario,
       produtos: produtosFinal,
       total,
       retirada: false,
-    });
+      promocao,
+    }], { session });
 
-    res.status(201).json(venda);
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json(venda[0]);
+
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Erro ao processar a venda:', error);
     res.status(400).send(error.message);
   }
 };
@@ -121,26 +136,40 @@ export const updateRetirada = async (req, res) => {
 };
 
 export const destroy = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const venda = await Venda.findById(req.params.id).exec();
+    const venda = await Venda.findById(req.params.id).session(session).exec();
     if (!venda) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: "Venda não encontrada" });
     }
 
     for (const item of venda.produtos) {
-      const pizza = await Pizza.findById(item.produto).exec();
+      const pizza = await Pizza.findById(item.produto).session(session).exec();
       if (pizza) {
         pizza.estoque += item.quantidade;
-        await pizza.save();
+        await pizza.save({ session });
       }
     }
 
-    await Venda.findByIdAndDelete(req.params.id).exec();
+    await Venda.findByIdAndDelete(req.params.id).session(session).exec();
+
+    await session.commitTransaction();
+    session.endSession();
+
     res.status(204).json();
+
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Erro ao deletar venda:', error);
     res.status(400).send(error.message);
   }
 };
+
 export const vendasMensal = async (req, res) => {
   try {
     const { dataInicio, dataFim } = req.query;
@@ -167,7 +196,7 @@ export const vendasMensal = async (req, res) => {
       {
         $group: {
           _id: { $month: "$dataVenda" },
-          totalVendas: { $sum: "$total" },  // <<-- aqui estava "$valorTotal"
+          totalVendas: { $sum: "$total" },
           quantidade: { $sum: 1 }
         }
       },
@@ -208,7 +237,7 @@ export async function maisVendidas(req, res) {
       },
       {
         $lookup: {
-          from: "pizzas", // nome da coleção no MongoDB, veja se é exatamente esse
+          from: "pizzas",
           localField: "_id",
           foreignField: "_id",
           as: "pizza"
@@ -235,9 +264,3 @@ export async function maisVendidas(req, res) {
     res.status(500).json({ erro: "Erro ao buscar pizzas mais vendidas" });
   }
 };
-
-
-
-
-
-

@@ -36,7 +36,7 @@ export const login = async (req, res) => {
     }
 
     const token = jwtServices.generateAcessToken(user)
-    return res.status(200).json({ user: { id: user._id, email: user.email }, token })
+    return res.status(200).json({ user: { id: user._id, email: user.email, role: user.role }, token })
   } catch (error) {
     console.error('Erro no login:', error)
     return res.status(500).json({ error: 'Erro interno no servidor' })
