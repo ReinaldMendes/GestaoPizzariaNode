@@ -11,7 +11,7 @@ import Produtos from '../pages/Produtos.vue';
 import Pizzas from '../pages/Pizzas.vue';
 import Clientes from '../pages/Clientes.vue';
 import Vendas from '../pages/Vendas.vue';
-import PromocaoForm from '../views/PromocaoForm.vue'; // 🔹 Importa a nova página de promoção
+import PromocaoForm from '../views/PromocaoForm.vue';
 
 // Rotas públicas
 const publicRoutes = [
@@ -23,12 +23,13 @@ const publicRoutes = [
 // Rotas privadas
 const privateRoutes = [
   { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true } },
-  { path: '/usuarios', component: Usuarios, meta: { requiresAuth: true } },
+  // 🔹 A rota de usuários agora tem a meta de `requiredRole`
+  { path: '/usuarios', component: Usuarios, meta: { requiresAuth: true, requiredRole: 'ADMINISTRATOR' } },
   { path: '/produtos', component: Produtos, meta: { requiresAuth: true } },
   { path: '/pizzas', component: Pizzas, meta: { requiresAuth: true } },
   { path: '/clientes', component: Clientes, meta: { requiresAuth: true } },
   { path: '/vendas', component: Vendas, meta: { requiresAuth: true } },
-  { path: '/promocoes/criar', component: PromocaoForm, meta: { requiresAuth: true } }, // 🔹 Nova rota de promoção
+  { path: '/promocoes/criar', component: PromocaoForm, meta: { requiresAuth: true } },
 ];
 
 const routes = [...publicRoutes, ...privateRoutes];
@@ -46,21 +47,17 @@ router.beforeEach((to, from, next) => {
   // Verifica se a rota requer autenticação (todas as rotas privadas)
   if (to.meta.requiresAuth) {
     if (!token) {
-      // Se não houver token, redireciona para o login
       return next('/login');
     }
 
     try {
       const user = JSON.parse(userRaw || '{}');
 
-      // Verifica se a rota requer uma função específica (role)
       if (to.meta.requiredRole && user.role !== to.meta.requiredRole) {
-        // Se o usuário não tiver a função necessária, redireciona
         return next('/dashboard');
       }
 
     } catch (err) {
-      // Em caso de erro ao analisar o usuário, força o login
       console.error('Erro ao analisar dados do usuário:', err);
       return next('/login');
     }

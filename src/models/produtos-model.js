@@ -20,7 +20,12 @@ const produtoSchema = new Schema(
       required: true,
       min: 0,
     },
-
+    // 🔹 NOVO CAMPO: unidade de medida para o ingrediente
+    unidadeMedida: {
+      type: String,
+      enum: ['g', 'ml', 'un', 'm'], // Exemplo: gramas, mililitros, unidades, metros
+      required: true,
+    },
   },
   { timestamps: true }
 );

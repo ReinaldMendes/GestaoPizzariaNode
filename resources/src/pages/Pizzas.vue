@@ -3,11 +3,9 @@
     <div class="pizzas-page">
       <h1>Pizzas 🍕</h1>
 
-      <!-- Mensagens -->
       <p v-if="sucesso" class="success-message">{{ sucesso }}</p>
       <p v-if="erro" class="error-message">{{ erro }}</p>
 
-      <!-- Formulário de nova pizza -->
       <form @submit.prevent="salvarPizza" class="pizza-form">
         <label for="sabor">Sabor:</label>
         <input v-model="form.sabor" id="sabor" type="text" required placeholder="Ex: Calabresa" />
@@ -15,8 +13,38 @@
         <label for="preco">Preço:</label>
         <input v-model.number="form.preco" id="preco" type="number" step="0.01" required placeholder="Ex: 35.00" />
 
-        <label for="estoque">Estoque:</label>
+        <label for="estoque">Estoque de Pizzas Prontas:</label>
         <input v-model.number="form.estoque" id="estoque" type="number" min="0" required placeholder="Ex: 10" />
+
+        <div class="ingredientes-group">
+          <label for="ingredientes-select">Ingredientes:</label>
+          <div class="ingredientes-list-wrapper">
+            <select
+              v-model="ingredienteSelecionadoId"
+              id="ingredientes-select"
+              class="ingredientes-select"
+            >
+              <option value="">Selecione um ingrediente</option>
+              <option v-for="ingrediente in ingredientesDisponiveis" :key="ingrediente._id" :value="ingrediente._id">
+                {{ ingrediente.nome }}
+              </option>
+            </select>
+            <input
+              v-model.number="quantidadeIngrediente"
+              type="number"
+              min="1"
+              placeholder="Qtd."
+              class="quantidade-input"
+            />
+            <button type="button" @click="adicionarIngrediente" class="add-btn">Adicionar</button>
+          </div>
+          <ul class="ingredientes-selecionados">
+            <li v-for="(item, index) in form.ingredientes" :key="index">
+              {{ obterNomeIngrediente(item.produto) }} ({{ item.quantidade_usada }})
+              <button type="button" @click="removerIngrediente(index)" class="remove-btn">x</button>
+            </li>
+          </ul>
+        </div>
 
         <div class="form-actions">
           <button type="submit">{{ editando ? 'Atualizar' : 'Cadastrar' }}</button>
@@ -24,7 +52,6 @@
         </div>
       </form>
 
-      <!-- Lista de pizzas -->
       <h2>Lista de Pizzas</h2>
       <div class="table-wrapper">
         <table v-if="pizzas.length" class="pizzas-table">
@@ -59,12 +86,23 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import PrivateLayout from "../components/PrivateLayout.vue";
 
-const API_PIZZAS = import.meta.env.VITE_API_URL +"/pizzas";
+const API_PIZZAS = import.meta.env.VITE_API_URL + "/pizzas";
+const API_PRODUTOS = import.meta.env.VITE_API_URL + "/produtos";
 
 axios.defaults.headers.common["Authorization"] = `Bearer ${localStorage.getItem("token")}`;
 
 const pizzas = ref([]);
-const form = ref({ sabor: "", preco: null, estoque: null });
+const ingredientesDisponiveis = ref([]);
+const ingredienteSelecionadoId = ref('');
+const quantidadeIngrediente = ref(1);
+
+const form = ref({
+  sabor: "",
+  preco: null,
+  estoque: null,
+  ingredientes: [] // 🔹 Novo array para a receita
+});
+
 const sucesso = ref("");
 const erro = ref("");
 const editando = ref(false);
@@ -79,8 +117,42 @@ const carregarPizzas = async () => {
   }
 };
 
+const carregarIngredientes = async () => {
+  try {
+    const res = await axios.get(API_PRODUTOS);
+    ingredientesDisponiveis.value = res.data;
+  } catch (e) {
+    erro.value = "Erro ao carregar ingredientes.";
+  }
+};
+
+const obterNomeIngrediente = (id) => {
+  const ingrediente = ingredientesDisponiveis.value.find(p => p._id === id);
+  return ingrediente ? ingrediente.nome : 'Desconhecido';
+};
+
+const adicionarIngrediente = () => {
+  if (ingredienteSelecionadoId.value && quantidadeIngrediente.value > 0) {
+    const ingrediente = ingredientesDisponiveis.value.find(p => p._id === ingredienteSelecionadoId.value);
+    if (ingrediente) {
+      form.value.ingredientes.push({
+        produto: ingrediente._id,
+        quantidade_usada: quantidadeIngrediente.value
+      });
+      // Limpa os campos para o próximo
+      ingredienteSelecionadoId.value = '';
+      quantidadeIngrediente.value = 1;
+    }
+  }
+};
+
+const removerIngrediente = (index) => {
+  form.value.ingredientes.splice(index, 1);
+};
+
 onMounted(() => {
   carregarPizzas();
+  carregarIngredientes();
 });
 
 const salvarPizza = async () => {
@@ -96,7 +168,7 @@ const salvarPizza = async () => {
       sucesso.value = "Pizza cadastrada com sucesso!";
     }
 
-    form.value = { sabor: "", preco: null, estoque: null };
+    form.value = { sabor: "", preco: null, estoque: null, ingredientes: [] };
     editando.value = false;
     editandoId.value = null;
     carregarPizzas();
@@ -107,13 +179,18 @@ const salvarPizza = async () => {
 };
 
 const editarPizza = (pizza) => {
-  form.value = { sabor: pizza.sabor, preco: pizza.preco, estoque: pizza.estoque };
+  form.value = {
+    sabor: pizza.sabor,
+    preco: pizza.preco,
+    estoque: pizza.estoque,
+    ingredientes: [...pizza.ingredientes] // Cria uma cópia para edição
+  };
   editandoId.value = pizza._id;
   editando.value = true;
 };
 
 const cancelarEdicao = () => {
-  form.value = { sabor: "", preco: null, estoque: null };
+  form.value = { sabor: "", preco: null, estoque: null, ingredientes: [] };
   editando.value = false;
   editandoId.value = null;
 };
@@ -242,6 +319,73 @@ const removerPizza = async (id) => {
   color: red;
   font-weight: bold;
   margin-bottom: 1rem;
+}
+
+.ingredientes-group {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  gap: 0.5rem;
+}
+
+.ingredientes-list-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.ingredientes-select, .quantidade-input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.ingredientes-select {
+  flex: 1;
+}
+
+.quantidade-input {
+  width: 70px;
+}
+
+.add-btn {
+  background-color: #28a745;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ingredientes-selecionados {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.ingredientes-selecionados li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.remove-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* RESPONSIVIDADE */

@@ -1,30 +1,34 @@
-import { Schema, model } from "mongoose";
+// src/models/pizza-model.js
+import mongoose from "mongoose";
 
-const pizzaSchema = new Schema(
-  {
-    sabor: {
-      type: String,
-      required: true,
-    },
-    preco: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    estoque: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    custo: {
-      type: Number,
-      required: true,
-      min: 0 // Garante que o custo não seja negativo
-    }
+const PizzaSchema = new mongoose.Schema({
+  sabor: {
+    type: String,
+    required: true,
+    unique: true
   },
-  { timestamps: true }
-);
+  preco: {
+    type: Number,
+    required: true
+  },
+  estoque: {
+    type: Number,
+    required: true // O estoque da pizza finalizada
+  },
+  // 🔹 Campo de "receita"
+  ingredientes: [{
+    produto: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Produto' // Referencia a tabela de ingredientes
+    },
+    quantidade_usada: { // A quantidade de cada ingrediente usado (ex: 150 para gramas)
+      type: Number,
+      required: true
+    }
+  }]
+}, {
+  timestamps: true
+});
 
-const Pizza = model("Pizza", pizzaSchema);
-
+const Pizza = mongoose.model("Pizza", PizzaSchema);
 export default Pizza;

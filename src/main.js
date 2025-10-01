@@ -36,6 +36,6 @@ app.use("/usuario", usuario_router);
 app.use("/produtos", produto_router);
 app.use("/pizzas", pizza_router);
 app.use("/clientes", cliente_router);
-app.use("/promocao/",promocaoRoutes);
+app.use("/promocoes",promocaoRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.listen(process.env.API_PORT, () => console.log("Server Running"));

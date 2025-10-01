@@ -1,5 +1,6 @@
 import Venda from "../models/venda-model.js";
 import Pizza from "../models/pizza-model.js";
+import Produto from "../models/produtos-model.js"; // 🔹 Importado para gerenciar o estoque de ingredientes
 import mongoose from 'mongoose';
 
 export const index = async (req, res) => {
@@ -65,18 +66,35 @@ export const store = async (req, res) => {
     for (const item of produtos) {
       const { produto: pizzaId, quantidade } = item;
 
-      const pizza = await Pizza.findById(pizzaId).session(session).exec();
+      // 🔹 Popula a pizza e seus ingredientes para a transação
+      const pizza = await Pizza.findById(pizzaId).populate('ingredientes.produto').session(session).exec();
 
       if (!pizza) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(404).json({ error: `Produto com ID ${pizzaId} não encontrado` });
+        return res.status(404).json({ error: `Pizza com ID ${pizzaId} não encontrada` });
       }
 
+      // 🔹 Verifica o estoque de ingredientes
+      for (const ingrediente of pizza.ingredientes) {
+        if (ingrediente.produto.estoque < ingrediente.quantidade_usada * quantidade) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: `Estoque insuficiente do ingrediente ${ingrediente.produto.nome} para a pizza ${pizza.sabor}` });
+        }
+      }
+
+      // 🔹 Dê baixa no estoque dos ingredientes
+      for (const ingrediente of pizza.ingredientes) {
+        ingrediente.produto.estoque -= ingrediente.quantidade_usada * quantidade;
+        await ingrediente.produto.save({ session });
+      }
+
+      // 🔹 Dê baixa no estoque da pizza finalizada
       if (pizza.estoque < quantidade) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({ error: `Estoque insuficiente para pizza ${pizza.sabor}` });
+        return res.status(400).json({ error: `Estoque de pizzas prontas insuficiente para ${pizza.sabor}` });
       }
 
       pizza.estoque -= quantidade;
@@ -140,7 +158,15 @@ export const destroy = async (req, res) => {
   session.startTransaction();
 
   try {
-    const venda = await Venda.findById(req.params.id).session(session).exec();
+    const venda = await Venda.findById(req.params.id).populate({
+      path: 'produtos.produto',
+      model: 'Pizza',
+      populate: {
+        path: 'ingredientes.produto',
+        model: 'Produto'
+      }
+    }).session(session).exec();
+    
     if (!venda) {
       await session.abortTransaction();
       session.endSession();
@@ -150,8 +176,18 @@ export const destroy = async (req, res) => {
     for (const item of venda.produtos) {
       const pizza = await Pizza.findById(item.produto).session(session).exec();
       if (pizza) {
+        // 🔹 Devolve ao estoque da pizza finalizada
         pizza.estoque += item.quantidade;
         await pizza.save({ session });
+      }
+
+      // 🔹 Devolve ao estoque dos ingredientes
+      for (const ingrediente of item.produto.ingredientes) {
+        const produto = await Produto.findById(ingrediente.produto).session(session).exec();
+        if (produto) {
+          produto.estoque += ingrediente.quantidade_usada * item.quantidade;
+          await produto.save({ session });
+        }
       }
     }
 
@@ -181,7 +217,6 @@ export const vendasMensal = async (req, res) => {
       if (dataInicio) filtro.dataVenda.$gte = new Date(dataInicio);
       if (dataFim) filtro.dataVenda.$lte = new Date(dataFim);
     } else {
-      // Padrão: Ano atual
       const now = new Date();
       const inicioAno = new Date(now.getFullYear(), 0, 1);
       const fimAno = new Date(now.getFullYear(), 11, 31, 23, 59, 59);

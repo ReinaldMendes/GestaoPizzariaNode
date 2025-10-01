@@ -3,11 +3,9 @@
     <div class="produtos-page">
       <h1>Produtos 🍕</h1>
 
-      <!-- Mensagens -->
       <p v-if="sucesso" class="success-message">{{ sucesso }}</p>
       <p v-if="erro" class="error-message">{{ erro }}</p>
 
-      <!-- Formulário de Cadastro -->
       <form @submit.prevent="criarProduto" class="produto-form">
         <input
           v-model="novoProduto.nome"
@@ -36,10 +34,16 @@
           required
           min="0"
         />
+        <select v-model="novoProduto.unidadeMedida" required>
+          <option value="">Selecione a Unidade</option>
+          <option value="g">Gramas (g)</option>
+          <option value="ml">Mililitros (ml)</option>
+          <option value="un">Unidades (un)</option>
+          <option value="m">Metros (m)</option>
+        </select>
         <button type="submit">Cadastrar Produto</button>
       </form>
 
-      <!-- Lista de Produtos -->
       <h2>Lista de Produtos</h2>
 
       <div class="table-wrapper">
@@ -50,6 +54,7 @@
               <th>Descrição</th>
               <th>Preço</th>
               <th>Estoque</th>
+              <th>Unidade</th>
               <th v-if="usuarioRole === 'ADMINISTRATOR'">Ações</th>
             </tr>
           </thead>
@@ -74,6 +79,16 @@
                 <input v-model.number="produto.estoque" type="number" />
               </td>
               <td v-else>{{ produto.estoque }}</td>
+
+              <td v-if="produto.editando">
+                <select v-model="produto.unidadeMedida" required>
+                  <option value="g">g</option>
+                  <option value="ml">ml</option>
+                  <option value="un">un</option>
+                  <option value="m">m</option>
+                </select>
+              </td>
+              <td v-else>{{ produto.unidadeMedida }}</td>
 
               <td v-if="usuarioRole === 'ADMINISTRATOR'">
                 <div class="acoes">
@@ -105,7 +120,6 @@
         <p v-else>Nenhum produto cadastrado ainda.</p>
       </div>
 
-      <!-- Paginação -->
       <div v-if="produtos.length > itensPorPagina" class="pagination">
         <button
           :disabled="paginaAtual === 1"
@@ -146,6 +160,7 @@ const novoProduto = ref({
   descricao: "",
   preco: 0,
   estoque: 0,
+  unidadeMedida: "", // 🔹 Adicione o campo `unidadeMedida`
 });
 
 const sucesso = ref("");
@@ -187,7 +202,7 @@ const criarProduto = async () => {
     const response = await axios.post(API, novoProduto.value);
     produtos.value.push({ ...response.data, editando: false });
     sucesso.value = "Produto cadastrado com sucesso!";
-    novoProduto.value = { nome: "", descricao: "", preco: 0, estoque: 0 };
+    novoProduto.value = { nome: "", descricao: "", preco: 0, estoque: 0, unidadeMedida: "" }; // 🔹 Limpe o campo
     setTimeout(() => (sucesso.value = ""), 3000);
 
     paginaAtual.value = totalPaginas.value;
@@ -234,6 +249,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* O CSS foi mantido o mesmo */
 .produtos-page {
   padding: 2rem;
   max-width: 900px;

@@ -1,6 +1,7 @@
-// src/controllers/promocao-controller.js
 import Promocao from '../models/promocao-model.js';
 import Venda from '../models/venda-model.js';
+import Pizza from '../models/pizza-model.js';
+import Produto from '../models/produtos-model.js';
 
 // Função para criar uma nova promoção
 export const store = async (req, res) => {
@@ -12,17 +13,27 @@ export const store = async (req, res) => {
   }
 };
 
-// Função para listar todas as promoções
+// Função para listar todas as promoções, com filtro opcional por data
 export const index = async (req, res) => {
   try {
-    const promocoes = await Promocao.find().populate('pizzasIncluidas', 'sabor preco').exec();
+    const { data } = req.query;
+    const filtro = {};
+
+    if (data) {
+      const dataFiltro = new Date(data);
+      // Busca promoções que estejam ativas na data do filtro
+      filtro.dataInicio = { $lte: dataFiltro };
+      filtro.dataFim = { $gte: dataFiltro };
+    }
+
+    const promocoes = await Promocao.find(filtro).populate('pizzasIncluidas', 'sabor preco').exec();
     res.json(promocoes);
   } catch (error) {
     res.status(400).send(error.message);
   }
 };
 
-// 🔹 Função para calcular o relatório de uma promoção específica
+// Função para calcular o relatório de uma promoção específica
 export const relatorioPromocao = async (req, res) => {
   try {
     const { id } = req.params;
@@ -35,7 +46,14 @@ export const relatorioPromocao = async (req, res) => {
 
     // Busca todas as vendas associadas a essa promoção
     const vendasPromocao = await Venda.find({ promocao: id })
-      .populate('produtos.produto', 'preco custo') // Popula com preco e custo da pizza
+      .populate({
+        path: 'produtos.produto',
+        model: 'Pizza',
+        populate: {
+          path: 'ingredientes.produto',
+          model: 'Produto'
+        }
+      })
       .exec();
 
     let receitaBruta = 0;
@@ -43,10 +61,16 @@ export const relatorioPromocao = async (req, res) => {
 
     vendasPromocao.forEach(venda => {
       venda.produtos.forEach(item => {
-        // Verifica se o produto foi populado corretamente
         if (item.produto) {
+          // Receita Bruta (preço da pizza)
           receitaBruta += item.produto.preco * item.quantidade;
-          despesaTotal += item.produto.custo * item.quantidade;
+
+          // Despesa (custo dos ingredientes)
+          item.produto.ingredientes.forEach(ingrediente => {
+            if (ingrediente.produto) {
+              despesaTotal += ingrediente.produto.preco * ingrediente.quantidade_usada * item.quantidade;
+            }
+          });
         }
       });
     });
