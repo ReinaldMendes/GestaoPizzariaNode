@@ -3,7 +3,7 @@
 
 **Pizza API** é uma aplicação RESTful moderna e eficiente para gerenciar uma promoção beneficente de Pizzas. A API cobre desde o gerenciamento de estoque de produtos até a criação e venda de pizzas, oferecendo suporte completo para cadastro de clientes e controle de pedidos.
 
-> **Status do Projeto**: 🚀 Em desenvolvimento...
+> **Status do Projeto**: 🚀 Em desenvolvimento..
 
 ---
 
